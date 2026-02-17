@@ -104,17 +104,7 @@ public actor RemindersStore {
       reminder.dueDateComponents = calendarComponents(from: dueDate)
     }
     try eventStore.save(reminder, commit: true)
-    return ReminderItem(
-      id: reminder.calendarItemIdentifier,
-      title: reminder.title ?? "",
-      notes: reminder.notes,
-      isCompleted: reminder.isCompleted,
-      completionDate: reminder.completionDate,
-      priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-      dueDate: date(from: reminder.dueDateComponents),
-      listID: reminder.calendar.calendarIdentifier,
-      listName: reminder.calendar.title
-    )
+    return item(from: reminder)
   }
 
   public func updateReminder(id: String, update: ReminderUpdate) async throws -> ReminderItem {
@@ -145,17 +135,7 @@ public actor RemindersStore {
 
     try eventStore.save(reminder, commit: true)
 
-    return ReminderItem(
-      id: reminder.calendarItemIdentifier,
-      title: reminder.title ?? "",
-      notes: reminder.notes,
-      isCompleted: reminder.isCompleted,
-      completionDate: reminder.completionDate,
-      priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-      dueDate: date(from: reminder.dueDateComponents),
-      listID: reminder.calendar.calendarIdentifier,
-      listName: reminder.calendar.title
-    )
+    return item(from: reminder)
   }
 
   public func completeReminders(ids: [String]) async throws -> [ReminderItem] {
@@ -164,19 +144,7 @@ public actor RemindersStore {
       let reminder = try reminder(withID: id)
       reminder.isCompleted = true
       try eventStore.save(reminder, commit: true)
-      updated.append(
-        ReminderItem(
-          id: reminder.calendarItemIdentifier,
-          title: reminder.title ?? "",
-          notes: reminder.notes,
-          isCompleted: reminder.isCompleted,
-          completionDate: reminder.completionDate,
-          priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-          dueDate: date(from: reminder.dueDateComponents),
-          listID: reminder.calendar.calendarIdentifier,
-          listName: reminder.calendar.title
-        )
-      )
+      updated.append(item(from: reminder))
     }
     return updated
   }
