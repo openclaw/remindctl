@@ -55,7 +55,7 @@ enum EditCommand {
       let listName = values.option("list")
       let notes = values.option("notes")
 
-      var dueUpdate: Date??
+      var dueUpdate: ParsedDate??
       if let dueValue = values.option("due") {
         dueUpdate = try CommandHelpers.parseDueDate(dueValue)
       }

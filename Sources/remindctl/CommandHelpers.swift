@@ -17,10 +17,10 @@ enum CommandHelpers {
     }
   }
 
-  static func parseDueDate(_ value: String) throws -> Date {
-    guard let date = DateParsing.parseUserDate(value) else {
+  static func parseDueDate(_ value: String) throws -> ParsedDate {
+    guard let parsed = DateParsing.parseUserDate(value) else {
       throw RemindCoreError.invalidDate(value)
     }
-    return date
+    return parsed
   }
 }

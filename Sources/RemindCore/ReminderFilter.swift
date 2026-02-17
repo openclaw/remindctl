@@ -30,8 +30,8 @@ public enum ReminderFiltering {
     case "all", "a":
       return .all
     default:
-      if let date = DateParsing.parseUserDate(token, now: now, calendar: calendar) {
-        return .date(date)
+      if let parsed = DateParsing.parseUserDate(token, now: now, calendar: calendar) {
+        return .date(parsed.date)
       }
       return nil
     }

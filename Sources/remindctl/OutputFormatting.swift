@@ -50,7 +50,10 @@ enum OutputRenderer {
   static func printReminder(_ reminder: ReminderItem, format: OutputFormat) {
     switch format {
     case .standard:
-      let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
+      let due =
+        reminder.dueDate.map {
+          DateParsing.formatDisplay($0, isDateOnly: reminder.isDateOnly)
+        } ?? "no due date"
       Swift.print("✓ \(reminder.title) [\(reminder.listName)] — \(due)")
     case .plain:
       Swift.print(plainLine(for: reminder))
@@ -96,7 +99,10 @@ enum OutputRenderer {
     }
     for (index, reminder) in sorted.enumerated() {
       let status = reminder.isCompleted ? "x" : " "
-      let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
+      let due =
+        reminder.dueDate.map {
+          DateParsing.formatDisplay($0, isDateOnly: reminder.isDateOnly)
+        } ?? "no due date"
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
       Swift.print("[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)")
     }
@@ -110,7 +116,16 @@ enum OutputRenderer {
   }
 
   private static func plainLine(for reminder: ReminderItem) -> String {
-    let due = reminder.dueDate.map { isoFormatter().string(from: $0) } ?? ""
+    let due: String
+    if let dueDate = reminder.dueDate {
+      if reminder.isDateOnly {
+        due = dateOnlyFormatter().string(from: dueDate)
+      } else {
+        due = isoFormatter().string(from: dueDate)
+      }
+    } else {
+      due = ""
+    }
     return [
       reminder.id,
       reminder.listName,
@@ -155,6 +170,14 @@ enum OutputRenderer {
   private static func isoFormatter() -> ISO8601DateFormatter {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+  }
+
+  private static func dateOnlyFormatter() -> DateFormatter {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone.current
+    formatter.dateFormat = "yyyy-MM-dd"
     return formatter
   }
 }
