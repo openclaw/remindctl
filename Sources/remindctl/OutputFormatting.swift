@@ -96,7 +96,19 @@ enum OutputRenderer {
     }
     for (index, reminder) in sorted.enumerated() {
       let status = reminder.isCompleted ? "x" : " "
-      let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
+      let due: String
+      if let dueDate = reminder.dueDate {
+        if reminder.isAllDay {
+          let formatter = DateFormatter()
+          formatter.dateStyle = .medium
+          formatter.timeStyle = .none
+          due = formatter.string(from: dueDate)
+        } else {
+          due = DateParsing.formatDisplay(dueDate)
+        }
+      } else {
+        due = "no due date"
+      }
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
       Swift.print("[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)")
     }

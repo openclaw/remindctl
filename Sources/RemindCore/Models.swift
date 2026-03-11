@@ -51,8 +51,11 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   public let completionDate: Date?
   public let priority: ReminderPriority
   public let dueDate: Date?
+  public let isAllDay: Bool
   public let listID: String
   public let listName: String
+  public let lastModifiedDate: Date?
+  public let creationDate: Date?
 
   public init(
     id: String,
@@ -62,8 +65,11 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     completionDate: Date?,
     priority: ReminderPriority,
     dueDate: Date?,
+    isAllDay: Bool = false,
     listID: String,
-    listName: String
+    listName: String,
+    lastModifiedDate: Date? = nil,
+    creationDate: Date? = nil
   ) {
     self.id = id
     self.title = title
@@ -72,8 +78,11 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     self.completionDate = completionDate
     self.priority = priority
     self.dueDate = dueDate
+    self.isAllDay = isAllDay
     self.listID = listID
     self.listName = listName
+    self.lastModifiedDate = lastModifiedDate
+    self.creationDate = creationDate
   }
 }
 
