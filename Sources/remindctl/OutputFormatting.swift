@@ -98,7 +98,8 @@ enum OutputRenderer {
       let status = reminder.isCompleted ? "x" : " "
       let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
-      Swift.print("[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)")
+      let flag = reminder.isFlagged ? " ⚑" : ""
+      Swift.print("[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(flag)")
     }
   }
 
@@ -116,6 +117,7 @@ enum OutputRenderer {
       reminder.listName,
       reminder.isCompleted ? "1" : "0",
       reminder.priority.rawValue,
+      reminder.isFlagged ? "1" : "0",
       due,
       reminder.title,
     ].joined(separator: "\t")

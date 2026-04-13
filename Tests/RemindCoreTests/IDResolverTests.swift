@@ -15,6 +15,7 @@ struct IDResolverTests {
         completionDate: nil,
         priority: .none,
         dueDate: Date(timeIntervalSince1970: 1_700_000_000),
+        isFlagged: false,
         listID: "list1",
         listName: "Work"
       ),
@@ -26,6 +27,7 @@ struct IDResolverTests {
         completionDate: nil,
         priority: .none,
         dueDate: Date(timeIntervalSince1970: 1_700_000_100),
+        isFlagged: false,
         listID: "list1",
         listName: "Work"
       ),
