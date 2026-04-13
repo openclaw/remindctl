@@ -24,6 +24,7 @@ struct ReminderFilteringTests {
         completionDate: nil,
         priority: .none,
         dueDate: yesterday,
+        isFlagged: false,
         listID: "a",
         listName: "Home"
       ),
@@ -35,6 +36,7 @@ struct ReminderFilteringTests {
         completionDate: nil,
         priority: .none,
         dueDate: today,
+        isFlagged: false,
         listID: "a",
         listName: "Home"
       ),
@@ -46,6 +48,7 @@ struct ReminderFilteringTests {
         completionDate: nil,
         priority: .none,
         dueDate: tomorrow,
+        isFlagged: false,
         listID: "a",
         listName: "Home"
       ),
@@ -57,6 +60,7 @@ struct ReminderFilteringTests {
         completionDate: nil,
         priority: .none,
         dueDate: nil,
+        isFlagged: false,
         listID: "a",
         listName: "Home"
       ),
@@ -68,6 +72,7 @@ struct ReminderFilteringTests {
         completionDate: now,
         priority: .none,
         dueDate: today,
+        isFlagged: false,
         listID: "a",
         listName: "Home"
       ),

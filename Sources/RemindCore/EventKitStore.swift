@@ -112,6 +112,7 @@ public actor RemindersStore {
       completionDate: reminder.completionDate,
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
+      isFlagged: reminder.isFlagged,
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
@@ -153,6 +154,7 @@ public actor RemindersStore {
       completionDate: reminder.completionDate,
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
+      isFlagged: reminder.isFlagged,
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
@@ -173,6 +175,7 @@ public actor RemindersStore {
           completionDate: reminder.completionDate,
           priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
           dueDate: date(from: reminder.dueDateComponents),
+          isFlagged: reminder.isFlagged,
           listID: reminder.calendar.calendarIdentifier,
           listName: reminder.calendar.title
         )
@@ -212,6 +215,7 @@ public actor RemindersStore {
       let completionDate: Date?
       let priority: Int
       let dueDateComponents: DateComponents?
+      let isFlagged: Bool
       let listID: String
       let listName: String
     }
@@ -228,6 +232,7 @@ public actor RemindersStore {
             completionDate: reminder.completionDate,
             priority: Int(reminder.priority),
             dueDateComponents: reminder.dueDateComponents,
+            isFlagged: reminder.isFlagged,
             listID: reminder.calendar.calendarIdentifier,
             listName: reminder.calendar.title
           )
@@ -245,6 +250,7 @@ public actor RemindersStore {
         completionDate: data.completionDate,
         priority: ReminderPriority(eventKitValue: data.priority),
         dueDate: date(from: data.dueDateComponents),
+        isFlagged: data.isFlagged,
         listID: data.listID,
         listName: data.listName
       )
@@ -284,6 +290,7 @@ public actor RemindersStore {
       completionDate: reminder.completionDate,
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
+      isFlagged: reminder.isFlagged,
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )

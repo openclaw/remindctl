@@ -51,6 +51,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   public let completionDate: Date?
   public let priority: ReminderPriority
   public let dueDate: Date?
+  public let isFlagged: Bool
   public let listID: String
   public let listName: String
 
@@ -62,6 +63,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     completionDate: Date?,
     priority: ReminderPriority,
     dueDate: Date?,
+    isFlagged: Bool,
     listID: String,
     listName: String
   ) {
@@ -72,6 +74,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     self.completionDate = completionDate
     self.priority = priority
     self.dueDate = dueDate
+    self.isFlagged = isFlagged
     self.listID = listID
     self.listName = listName
   }
