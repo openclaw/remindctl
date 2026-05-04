@@ -31,7 +31,7 @@
      gh release create v0.2.0 /tmp/remindctl-macos.zip -t "v0.2.0" -F /tmp/release-notes.txt
      ```
 5. Update Homebrew tap
-   - Run `scripts/update-homebrew.sh vX.Y.Z` to trigger the centralized formula updater.
+   - Run `scripts/update-homebrew.sh vX.Y.Z` to trigger and watch the centralized formula updater.
    - Requires a GitHub token with workflow dispatch access to `steipete/homebrew-tap`.
 
 ## What happens in CI
