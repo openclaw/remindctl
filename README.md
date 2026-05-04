@@ -6,7 +6,7 @@ Fast CLI for Apple Reminders on macOS.
 
 ## Install
 
-### Homebrew (Home Pro)
+### Homebrew
 ```bash
 brew install steipete/tap/remindctl
 ```
@@ -50,10 +50,8 @@ remindctl list Projects --create
 
 remindctl add "Buy milk"
 remindctl add --title "Call mom" --list Personal --due tomorrow
-remindctl add "Meeting" --due "2026-01-03 09:00" --alarm "2026-01-03 08:55"
-remindctl add "Check mailbox" --location "1 Apple Park Way, Cupertino, CA"
-remindctl add "Take vitamins" --due tomorrow --repeat daily
-remindctl edit 1 --title "New title" --due 2026-01-04 --clear-alarm
+remindctl add "Meeting" --due "2026-01-03 09:00"
+remindctl edit 1 --title "New title" --due 2026-01-04
 remindctl list Work Errands       # show reminders from multiple lists
 remindctl complete 1 2 3
 remindctl delete 4A83 --force
@@ -78,11 +76,17 @@ Accepted by `--due` and filters:
 - Local ISO 8601 without timezone (`2026-01-03T12:34:56`)
 
 Date-only due inputs create all-day reminders; date-time inputs create timed reminders.
-Timed due reminders get a notification alarm at the due time unless `--alarm` sets a different alarm time.
-Use `edit <id> --clear-alarm` to remove an alarm.
 
-Use `--location <address>` on `add` to create a location trigger. Add `--leaving` to trigger when leaving
-instead of arriving, and `--radius <meters>` to customize the geofence radius.
+## Alarms
+Timed due reminders get a notification alarm at the due time unless `--alarm` sets a different alarm time.
+
+```bash
+remindctl add "Meeting" --due "2026-01-03 09:00" --alarm "2026-01-03 08:55"
+remindctl edit 4A83 --alarm "2026-01-03 08:55"
+remindctl edit 4A83 --clear-alarm
+```
+
+This is public EventKit alarm support, not Apple's private Reminders "Urgent" toggle.
 
 ## Repeat
 Use `--repeat` with `add` or `edit` for simple recurrence:
@@ -90,6 +94,30 @@ Use `--repeat` with `add` or `edit` for simple recurrence:
 - `every N days/weeks/months/years`
 
 Use `edit <id> --no-repeat` to clear recurrence.
+
+```bash
+remindctl add "Take vitamins" --due tomorrow --repeat daily
+remindctl add "Water filter" --due "2026-09-13" --repeat "every 6 months"
+remindctl edit 4A83 --repeat weekly
+remindctl edit 4A83 --no-repeat
+```
+
+## Location Triggers
+Use `--location <address>` on `add` to create a location trigger. Add `--leaving` to trigger when leaving
+instead of arriving, and `--radius <meters>` to customize the geofence radius.
+
+```bash
+remindctl add "Check mailbox" --location "1 Apple Park Way, Cupertino, CA"
+remindctl add "Lock up" --location "Home" --leaving
+remindctl add "Get groceries" --location "123 Main St" --radius 200
+```
+
+Location triggers use EventKit/CoreLocation geocoding and may depend on system location services.
+
+## Unsupported
+- Native Reminders sections are not exposed by EventKit; section support would need a separate backend.
+- Native Reminders tags and smart lists are not exposed by EventKit.
+- File/image attachments are not exposed by EventKit.
 
 ## Permissions
 Run `remindctl authorize` to trigger the system prompt. If access is denied, enable
