@@ -32,13 +32,46 @@ struct IDResolverTests {
     ]
   }
 
-  @Test("Resolve by index")
+  @Test("Resolve by index uses indexedIDs")
   func resolveIndex() throws {
-    let resolved = try IDResolver.resolve(["1"], from: sampleReminders())
-    #expect(resolved.first?.title == "First")
+    let resolved = try IDResolver.resolve(
+      ["2"],
+      from: sampleReminders(),
+      indexedIDs: ["abcd1234", "abce5678"]
+    )
+    #expect(resolved.first?.title == "Second")
   }
 
-  @Test("Resolve by prefix")
+  @Test("Numeric input without indexedIDs throws")
+  func numericWithoutIndexedIDsThrows() {
+    #expect(throws: Error.self) {
+      _ = try IDResolver.resolve(["1"], from: sampleReminders())
+    }
+  }
+
+  @Test("Numeric out of range throws")
+  func numericOutOfRangeThrows() {
+    #expect(throws: Error.self) {
+      _ = try IDResolver.resolve(
+        ["3"],
+        from: sampleReminders(),
+        indexedIDs: ["abcd1234", "abce5678"]
+      )
+    }
+  }
+
+  @Test("Cached ID missing from live reminders throws reminderNotFound")
+  func cachedIDDeletedThrows() {
+    #expect(throws: RemindCoreError.reminderNotFound("zzzzzzzz")) {
+      _ = try IDResolver.resolve(
+        ["1"],
+        from: sampleReminders(),
+        indexedIDs: ["zzzzzzzz"]
+      )
+    }
+  }
+
+  @Test("Resolve by prefix works without indexedIDs")
   func resolvePrefix() throws {
     let resolved = try IDResolver.resolve(["abcd"], from: sampleReminders())
     #expect(resolved.first?.title == "First")

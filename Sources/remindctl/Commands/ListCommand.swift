@@ -86,6 +86,7 @@ enum ListCommand {
         }
 
         let reminders = try await reminders(in: names, store: store)
+        try? IndexCache.save(ReminderFiltering.sort(reminders).map { $0.id })
         OutputRenderer.printReminders(reminders, format: runtime.outputFormat)
         return
       }

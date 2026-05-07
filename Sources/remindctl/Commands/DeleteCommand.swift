@@ -33,7 +33,7 @@ enum DeleteCommand {
       let store = RemindersStore()
       try await store.requestAccess()
       let reminders = try await store.reminders(in: nil)
-      let resolved = try IDResolver.resolve(inputs, from: reminders)
+      let resolved = try IDResolver.resolve(inputs, from: reminders, indexedIDs: IndexCache.load())
 
       if values.flag("dryRun") {
         OutputRenderer.printReminders(resolved, format: runtime.outputFormat)

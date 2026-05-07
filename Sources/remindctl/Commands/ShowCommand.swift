@@ -52,6 +52,7 @@ enum ShowCommand {
       try await store.requestAccess()
       let reminders = try await store.reminders(in: listName)
       let filtered = ReminderFiltering.apply(reminders, filter: filter)
+      try? IndexCache.save(ReminderFiltering.sort(filtered).map { $0.id })
       OutputRenderer.printReminders(filtered, format: runtime.outputFormat)
     }
   }
