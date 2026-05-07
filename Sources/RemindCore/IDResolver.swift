@@ -14,9 +14,7 @@ public enum IDResolver {
       let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
       if let index = Int(trimmed) {
         guard let indexedIDs else {
-          throw RemindCoreError.operationFailed(
-            "No recent `remindctl show` output to resolve index \(index). Run `remindctl show` first, or pass an ID prefix."
-          )
+          throw RemindCoreError.numericIndexWithoutContext(index)
         }
         let idx = index - 1
         guard idx >= 0 && idx < indexedIDs.count else {

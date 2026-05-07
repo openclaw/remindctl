@@ -7,6 +7,7 @@ public enum RemindCoreError: LocalizedError, Sendable, Equatable {
   case reminderNotFound(String)
   case ambiguousIdentifier(String, matches: [String])
   case invalidIdentifier(String)
+  case numericIndexWithoutContext(Int)
   case invalidDate(String)
   case unsupported(String)
   case operationFailed(String)
@@ -35,6 +36,11 @@ public enum RemindCoreError: LocalizedError, Sendable, Equatable {
       return "Identifier \"\(input)\" matches multiple reminders: \(matches.joined(separator: ", "))."
     case .invalidIdentifier(let input):
       return "Invalid identifier: \"\(input)\"."
+    case .numericIndexWithoutContext(let index):
+      return [
+        "No recent `remindctl show` output to resolve index \(index).",
+        "Run `remindctl show` first, or pass an ID prefix.",
+      ].joined(separator: " ")
     case .invalidDate(let input):
       return "Invalid date: \"\(input)\"."
     case .unsupported(let message):
