@@ -5,7 +5,7 @@ SHELL := /bin/bash
 help:
 	@printf "%s\n" \
 		"make format    - swift format in-place" \
-		"make lint      - swift format lint + swiftlint" \
+		"make lint      - swift format lint + strict swiftlint" \
 		"make test      - sync version + swift test (coverage enabled)" \
 		"make check     - lint + test + coverage gate" \
 		"make build     - release build into bin/ (codesigned)" \
@@ -19,7 +19,7 @@ format:
 
 lint:
 	swift format lint --recursive Sources Tests
-	swiftlint
+	swiftlint --strict
 
 test:
 	scripts/generate-version.sh

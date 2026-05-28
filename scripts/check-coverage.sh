@@ -8,7 +8,7 @@ CACHE_PATH="${HOME}/Library/Caches/remindctl/swiftpm"
 COVERAGE_BUILD_PATH="${ROOT_DIR}/.build/coverage"
 mkdir -p "${CACHE_PATH}"
 
-MIN_COVERAGE="${COVERAGE_MIN:-80}"
+MIN_COVERAGE="${COVERAGE_MIN:-90}"
 INCLUDE_REGEX="${COVERAGE_INCLUDE_REGEX:-/Sources/RemindCore/}"
 EXCLUDE_REGEX="${COVERAGE_EXCLUDE_REGEX:-/Sources/RemindCore/EventKitStore.swift}"
 

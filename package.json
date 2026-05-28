@@ -1,13 +1,13 @@
 {
   "name": "remindctl",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "version:sync": "scripts/generate-version.sh",
     "remindctl": "pnpm -s version:sync && swift package clean && swift run remindctl",
     "start": "pnpm -s remindctl",
     "format": "swift format --in-place --recursive Sources Tests",
-    "lint": "swift format lint --recursive Sources Tests && swiftlint",
+    "lint": "swift format lint --recursive Sources Tests && swiftlint --strict",
     "test": "pnpm -s version:sync && swift test --enable-code-coverage",
     "coverage": "scripts/check-coverage.sh",
     "release:check": "scripts/check-release.sh",

@@ -16,6 +16,13 @@ struct AuthorizationStatusTests {
 
   @Test("Authorization display names")
   func displayNames() {
+    #expect(!RemindersAuthorizationStatus.notDetermined.isAuthorized)
+    #expect(!RemindersAuthorizationStatus.restricted.isAuthorized)
+    #expect(!RemindersAuthorizationStatus.denied.isAuthorized)
+    #expect(!RemindersAuthorizationStatus.writeOnly.isAuthorized)
+    #expect(RemindersAuthorizationStatus.fullAccess.isAuthorized)
+    #expect(RemindersAuthorizationStatus.notDetermined.displayName == "Not determined")
+    #expect(RemindersAuthorizationStatus.restricted.displayName == "Restricted")
     #expect(RemindersAuthorizationStatus.fullAccess.displayName == "Full access")
     #expect(RemindersAuthorizationStatus.writeOnly.displayName == "Write-only")
     #expect(RemindersAuthorizationStatus.denied.displayName == "Denied")

@@ -19,7 +19,7 @@ jobs:
       - name: Swift format lint
         run: swift format lint --recursive Sources Tests
       - name: SwiftLint
-        run: swiftlint
+        run: swiftlint --strict
       - name: Swift test + coverage
         run: scripts/check-coverage.sh
       - name: Swift build
