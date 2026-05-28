@@ -1,8 +1,11 @@
 # Changelog
 
 ## Unreleased
+
+## 0.3.0 - 2026-05-28
 - Add exact `--list-id` targeting, normalized list-name resolution, `doctor`, `export`, `link`, `open`, shell completion generation, table output, and release preflight checks.
 - Add a GitHub Pages documentation site for remindctl.sh.
+- Raise the RemindCore coverage gate to 90% and run SwiftLint in strict mode.
 - Add `search` and `info` commands for title, notes, URL lookup, and detailed reminder inspection.
 - Resolve numeric edit/complete/delete indexes against the default `show` view instead of unrelated completed reminders.
 - Add a release helper for Homebrew tap updates; thanks @dinakars777.
