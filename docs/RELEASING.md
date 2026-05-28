@@ -10,6 +10,7 @@
    - Run `scripts/generate-version.sh` (refreshes `Sources/remindctl/Version.swift` + embedded Info.plist).
 2. Ensure checks are green
    - `make check`
+   - `make release-check TAG=vX.Y.Z`
 3. Commit and tag
    - `git tag -a vX.Y.Z -m "vX.Y.Z"`
    - `git push origin vX.Y.Z`

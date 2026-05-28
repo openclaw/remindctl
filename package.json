@@ -10,6 +10,7 @@
     "lint": "swift format lint --recursive Sources Tests && swiftlint",
     "test": "pnpm -s version:sync && swift test --enable-code-coverage",
     "coverage": "scripts/check-coverage.sh",
+    "release:check": "scripts/check-release.sh",
     "check": "pnpm -s lint && pnpm -s test && pnpm -s coverage",
     "docs:site": "node scripts/build-docs-site.mjs",
     "clean": "swift package clean",
