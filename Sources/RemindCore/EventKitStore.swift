@@ -125,6 +125,7 @@ public actor RemindersStore {
     let reminder = EKReminder(eventStore: eventStore)
     reminder.title = draft.title
     reminder.notes = draft.notes
+    reminder.url = draft.url
     reminder.calendar = calendar
     reminder.priority = draft.priority.eventKitValue
     if let dueDate = draft.dueDate {
@@ -151,9 +152,9 @@ public actor RemindersStore {
     if let title = update.title {
       reminder.title = title
     }
-    if let notes = update.notes {
-      reminder.notes = notes
-    }
+    // Simple optional fields: outer optional present => apply. For url, inner nil clears it.
+    update.notes.map { reminder.notes = $0 }
+    update.url.map { reminder.url = $0 }
     if let dueDateUpdate = update.dueDate {
       if let dueDate = dueDateUpdate {
         reminder.dueDateComponents = nil

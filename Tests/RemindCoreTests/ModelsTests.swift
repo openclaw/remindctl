@@ -13,6 +13,24 @@ struct ModelsTests {
     #expect(RecurrenceRule(frequency: .yearly, interval: 4).displayString == "every 4 years")
   }
 
+  @Test("Reminder draft and update carry the url field")
+  func urlField() {
+    let url = URL(string: "https://example.com/product")!
+
+    // Draft: explicit url is preserved; default is nil.
+    let draft = ReminderDraft(title: "Buy", notes: nil, url: url, dueDate: nil, priority: .none)
+    #expect(draft.url == url)
+    #expect(ReminderDraft(title: "Buy", notes: nil, dueDate: nil, priority: .none).url == nil)
+
+    // Update double-optional: nil = leave, .some(nil) = clear, .some(url) = set.
+    #expect(ReminderUpdate(title: "x").url == nil)
+    let setUpdate = ReminderUpdate(url: .some(url))
+    #expect(setUpdate.url! == url)
+    let clearUpdate = ReminderUpdate(url: .some(nil))
+    #expect(clearUpdate.url != nil)
+    #expect(clearUpdate.url! == nil)
+  }
+
   @Test("Model initializers preserve defaults and explicit values")
   func initializerDefaults() {
     let date = Date(timeIntervalSince1970: 1_700_000_000)

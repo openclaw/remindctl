@@ -33,6 +33,12 @@ enum AddCommand {
             ),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Notes", parsing: .singleValue),
             .make(
+              label: "url",
+              names: [.long("url")],
+              help: "URL (Reminders dedicated URL field)",
+              parsing: .singleValue
+            ),
+            .make(
               label: "repeat",
               names: [.short("r"), .long("repeat")],
               help: "daily|weekly|biweekly|monthly|yearly|every N days/weeks/months/years",
@@ -57,6 +63,7 @@ enum AddCommand {
         "remindctl add \"Check mailbox\" --location \"1 Apple Park Way, Cupertino, CA\"",
         "remindctl add \"Take vitamins\" --due tomorrow --repeat daily",
         "remindctl add \"Review docs\" --priority high",
+        "remindctl add \"Buy headphones\" --url \"https://example.com/product\"",
       ]
     ) { values, runtime in
       let titleOption = values.option("title")
@@ -81,6 +88,7 @@ enum AddCommand {
       let listName = values.option("list")
       let listID = values.option("listID")
       let notes = values.option("notes")
+      let url = try values.option("url").map(CommandHelpers.parseURL)
       let dueValue = values.option("due")
       let alarmValue = values.option("alarm")
       let locationValue = values.option("location")
@@ -114,6 +122,7 @@ enum AddCommand {
       let draft = ReminderDraft(
         title: title,
         notes: notes,
+        url: url,
         dueDate: dueDate,
         alarmDate: alarmDate,
         recurrenceRule: recurrenceRule,

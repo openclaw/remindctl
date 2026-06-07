@@ -22,6 +22,7 @@ enum EditCommand {
             .make(label: "due", names: [.short("d"), .long("due")], help: "Set due date", parsing: .singleValue),
             .make(label: "alarm", names: [.short("a"), .long("alarm")], help: "Set alarm date", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Set notes", parsing: .singleValue),
+            .make(label: "url", names: [.long("url")], help: "Set URL", parsing: .singleValue),
             .make(
               label: "repeat",
               names: [.short("r"), .long("repeat")],
@@ -38,6 +39,7 @@ enum EditCommand {
           flags: [
             .make(label: "clearDue", names: [.long("clear-due")], help: "Clear due date"),
             .make(label: "clearAlarm", names: [.long("clear-alarm")], help: "Clear alarm"),
+            .make(label: "clearUrl", names: [.long("clear-url")], help: "Clear URL"),
             .make(label: "noRepeat", names: [.long("no-repeat")], help: "Remove recurrence"),
             .make(label: "complete", names: [.long("complete")], help: "Mark completed"),
             .make(label: "incomplete", names: [.long("incomplete")], help: "Mark incomplete"),
@@ -51,6 +53,8 @@ enum EditCommand {
         "remindctl edit 4A83 --repeat weekly",
         "remindctl edit 2 --priority high --notes \"Call before noon\"",
         "remindctl edit 3 --clear-due --clear-alarm --no-repeat",
+        "remindctl edit 4A83 --url \"https://example.com/product\"",
+        "remindctl edit 4A83 --clear-url",
       ]
     ) { values, runtime in
       guard let input = values.argument(0) else {
@@ -71,6 +75,17 @@ enum EditCommand {
       let notes = values.option("notes")
       let alarmValue = values.option("alarm")
       let repeatValue = values.option("repeat")
+
+      var urlUpdate: URL??
+      if let urlValue = values.option("url") {
+        urlUpdate = try CommandHelpers.parseURL(urlValue)
+      }
+      if values.flag("clearUrl") {
+        if urlUpdate != nil {
+          throw RemindCoreError.operationFailed("Use either --url or --clear-url, not both")
+        }
+        urlUpdate = .some(nil)
+      }
 
       var dueUpdate: ParsedUserDate??
       if let dueValue = values.option("due") {
@@ -120,8 +135,8 @@ enum EditCommand {
       let targetList = try CommandHelpers.listTarget(name: listName, id: listID)
 
       let hasChanges =
-        title != nil || targetList != nil || notes != nil || dueUpdate != nil || alarmUpdate != nil || priority != nil
-        || recurrenceUpdate != nil || isCompleted != nil
+        title != nil || targetList != nil || notes != nil || urlUpdate != nil || dueUpdate != nil
+        || alarmUpdate != nil || priority != nil || recurrenceUpdate != nil || isCompleted != nil
       if !hasChanges {
         throw RemindCoreError.operationFailed("No changes specified")
       }
@@ -129,6 +144,7 @@ enum EditCommand {
       let update = ReminderUpdate(
         title: title,
         notes: notes,
+        url: urlUpdate,
         dueDate: dueUpdate,
         alarmDate: alarmUpdate,
         recurrenceRule: recurrenceUpdate,

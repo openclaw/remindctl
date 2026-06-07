@@ -36,6 +36,7 @@ pnpm build
 remindctl add "Buy milk"
 remindctl add "Call mom" --list Personal --due tomorrow
 remindctl add "Meeting" --due "2026-01-03 09:00" --alarm "2026-01-03 08:55"
+remindctl add "Buy headphones" --url "https://example.com/product"
 
 remindctl today
 remindctl overdue
@@ -49,6 +50,7 @@ remindctl export --list Work --export-format csv
 remindctl link 1
 
 remindctl edit 1 --title "New title" --due 2026-01-04
+remindctl edit 1 --url "https://example.com/product"   # or --clear-url to remove it
 remindctl complete 1 2 3
 remindctl delete 4A83 --force
 ```

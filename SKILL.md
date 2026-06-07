@@ -76,6 +76,7 @@ Important options:
 - `--due <date>` set the due date
 - `--alarm <date>` set the alarm date
 - `--notes <text>` add notes
+- `--url <url>` set the dedicated URL field
 - `--repeat <rule>` set simple recurrence
 - `--priority <none|low|medium|high>` set priority
 - `--location <address>` create a location trigger
@@ -95,11 +96,12 @@ Use `--location` whenever using `--radius` or `--leaving`; those flags are inval
 - `--due` or `--clear-due`
 - `--alarm` or `--clear-alarm`
 - `--notes`
+- `--url` or `--clear-url`
 - `--repeat` or `--no-repeat`
 - `--priority`
 - `--complete` or `--incomplete`
 
-Reject conflicting combinations such as `--due` with `--clear-due`, `--alarm` with `--clear-alarm`, `--repeat` with `--no-repeat`, or `--complete` with `--incomplete`.
+Reject conflicting combinations such as `--due` with `--clear-due`, `--alarm` with `--clear-alarm`, `--url` with `--clear-url`, `--repeat` with `--no-repeat`, or `--complete` with `--incomplete`.
 
 Use `remindctl edit <id> --list <new-list>` to move a reminder between lists. Do not tell the user to delete and recreate the reminder for a move; the command already supports moving it directly.
 
