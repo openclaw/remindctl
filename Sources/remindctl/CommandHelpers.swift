@@ -26,8 +26,13 @@ enum CommandHelpers {
 
   static func parseURL(_ value: String) throws -> URL {
     let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty, let url = URL(string: trimmed) else {
-      throw RemindCoreError.operationFailed("Invalid URL: \"\(value)\"")
+    guard
+      !trimmed.isEmpty,
+      let url = URL(string: trimmed),
+      let scheme = url.scheme,
+      !scheme.isEmpty
+    else {
+      throw RemindCoreError.operationFailed("Invalid URL: \"\(value)\" (include a scheme like https://)")
     }
     return url
   }

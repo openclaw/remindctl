@@ -34,17 +34,20 @@ struct HelpPrinterTests {
     #expect(joined.contains("completion"))
   }
 
-  @Test("Add and edit help include alarm, location, and repeat options")
-  func alarmLocationAndRepeatHelp() {
+  @Test("Add and edit help include alarm, location, repeat, and URL options")
+  func alarmLocationRepeatAndURLHelp() {
     let addHelp = HelpPrinter.renderCommand(rootName: "remindctl", spec: AddCommand.spec).joined(separator: "\n")
     let editHelp = HelpPrinter.renderCommand(rootName: "remindctl", spec: EditCommand.spec).joined(separator: "\n")
 
     #expect(addHelp.contains("--alarm"))
     #expect(addHelp.contains("--location"))
     #expect(addHelp.contains("--leaving"))
+    #expect(addHelp.contains("--url"))
     #expect(addHelp.contains("--repeat"))
     #expect(editHelp.contains("--alarm"))
     #expect(editHelp.contains("--clear-alarm"))
+    #expect(editHelp.contains("--url"))
+    #expect(editHelp.contains("--clear-url"))
     #expect(editHelp.contains("--repeat"))
     #expect(editHelp.contains("--no-repeat"))
   }

@@ -76,16 +76,7 @@ enum EditCommand {
       let alarmValue = values.option("alarm")
       let repeatValue = values.option("repeat")
 
-      var urlUpdate: URL??
-      if let urlValue = values.option("url") {
-        urlUpdate = try CommandHelpers.parseURL(urlValue)
-      }
-      if values.flag("clearUrl") {
-        if urlUpdate != nil {
-          throw RemindCoreError.operationFailed("Use either --url or --clear-url, not both")
-        }
-        urlUpdate = .some(nil)
-      }
+      let urlUpdate = try parsedURLUpdate(urlValue: values.option("url"), clearURL: values.flag("clearUrl"))
 
       var dueUpdate: ParsedUserDate??
       if let dueValue = values.option("due") {
@@ -156,5 +147,15 @@ enum EditCommand {
       let updated = try await store.updateReminder(id: reminder.id, update: update)
       OutputRenderer.printReminder(updated, format: runtime.outputFormat)
     }
+  }
+
+  static func parsedURLUpdate(urlValue: String?, clearURL: Bool) throws -> URL?? {
+    if let urlValue {
+      if clearURL {
+        throw RemindCoreError.operationFailed("Use either --url or --clear-url, not both")
+      }
+      return try CommandHelpers.parseURL(urlValue)
+    }
+    return clearURL ? .some(nil) : nil
   }
 }
