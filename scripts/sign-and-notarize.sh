@@ -2,15 +2,12 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-source "$ROOT/version.env"
 
 APP_NAME="remindctl"
 CODESIGN_IDENTITY=${CODESIGN_IDENTITY:-"Developer ID Application: Peter Steinberger (Y5PE65HELJ)"}
 ENTITLEMENTS="${ROOT}/Resources/remindctl.entitlements"
 OUTPUT_DIR=${OUTPUT_DIR:-/tmp}
 ZIP_PATH="${OUTPUT_DIR}/remindctl-macos.zip"
-ARCHES_VALUE=${ARCHES:-"arm64 x86_64"}
-ARCH_LIST=( ${ARCHES_VALUE} )
 DIST_DIR="$(mktemp -d "/tmp/${APP_NAME}-dist.XXXXXX")"
 API_KEY_FILE="$(mktemp "/tmp/${APP_NAME}-notary.XXXXXX.p8")"
 
@@ -27,18 +24,7 @@ fi
 
 echo "$APP_STORE_CONNECT_API_KEY_P8" | sed 's/\\n/\n/g' > "$API_KEY_FILE"
 
-"$ROOT/scripts/generate-version.sh"
-
-for ARCH in "${ARCH_LIST[@]}"; do
-  swift build -c release --product remindctl --arch "$ARCH"
-done
-
-BINARIES=()
-for ARCH in "${ARCH_LIST[@]}"; do
-  BINARIES+=("$ROOT/.build/${ARCH}-apple-macosx/release/remindctl")
-done
-
-lipo -create "${BINARIES[@]}" -output "$DIST_DIR/remindctl"
+"$ROOT/scripts/build-macos-universal.sh" "$DIST_DIR/remindctl"
 
 if [[ -f "$ENTITLEMENTS" ]]; then
   codesign --force --timestamp --options runtime --sign "$CODESIGN_IDENTITY" \
@@ -69,5 +55,6 @@ codesign --verify --strict --verbose=4 "$DIST_DIR/remindctl"
 if ! spctl -a -t exec -vv "$DIST_DIR/remindctl"; then
   echo "spctl check failed (CLI binaries often report 'not an app')." >&2
 fi
+"$ROOT/scripts/check-macos-artifact.sh" "$ZIP_PATH"
 
 echo "Done: $ZIP_PATH"

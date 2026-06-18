@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help format lint test check build remindctl release-check docs-site clean
+.PHONY: help format lint test check build macos-artifact remindctl release-check docs-site clean
 
 help:
 	@printf "%s\n" \
@@ -9,6 +9,7 @@ help:
 		"make test      - sync version + swift test (coverage enabled)" \
 		"make check     - lint + test + coverage gate" \
 		"make build     - release build into bin/ (codesigned)" \
+		"make macos-artifact - build universal dist/remindctl-macos.zip" \
 		"make release-check TAG=vX.Y.Z - validate release preflight" \
 		"make remindctl - clean rebuild + run debug binary (ARGS=...)" \
 		"make docs-site - build GitHub Pages docs into dist/docs-site" \
@@ -36,6 +37,9 @@ build:
 	swift build -c release --product remindctl
 	cp .build/release/remindctl bin/remindctl
 	codesign --force --sign - --identifier com.steipete.remindctl bin/remindctl
+
+macos-artifact:
+	scripts/package-macos-release.sh
 
 release-check:
 	@if [ -z "$(TAG)" ]; then echo "Usage: make release-check TAG=vX.Y.Z" >&2; exit 1; fi

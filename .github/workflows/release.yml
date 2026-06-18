@@ -46,23 +46,8 @@ jobs:
       - name: Resolve packages
         run: swift package resolve
 
-      - name: Sync version
-        run: scripts/generate-version.sh
-
-      - name: Build
-        run: swift build -c release --product remindctl
-
-      - name: Codesign
-        run: codesign --force --sign - --identifier com.steipete.remindctl .build/release/remindctl
-
-      - name: Package artifact
-        run: |
-          mkdir -p dist
-          cp .build/release/remindctl dist/remindctl
-          (
-            cd dist
-            zip -r remindctl-macos.zip remindctl
-          )
+      - name: Package universal macOS artifact
+        run: scripts/package-macos-release.sh
 
       - name: Extract release notes from CHANGELOG
         shell: bash
