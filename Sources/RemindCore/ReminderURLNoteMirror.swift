@@ -1,7 +1,7 @@
 import Foundation
 
 enum ReminderURLNoteMirror {
-  private static let prefix = "URL: "
+  private static let prefix = "remindctl URL: "
 
   static func apply(notes: String?, showing url: URL?, replacing previousURL: URL? = nil) -> String? {
     let candidateLines = [previousURL, url].compactMap { candidate in
