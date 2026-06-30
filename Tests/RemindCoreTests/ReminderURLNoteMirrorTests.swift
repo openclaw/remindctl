@@ -85,6 +85,16 @@ struct ReminderURLNoteMirrorTests {
     #expect(ReminderURLNoteMirror.apply(notes: withMirror, showing: nil, replacing: url) == authoredNotes)
   }
 
+  @Test("URL mirror preserves authored empty notes when clearing without a managed line")
+  func preservesAuthoredEmptyNotesWhenClearingWithoutManagedLine() {
+    let oldURL = URL(string: "https://example.com/old")!
+
+    let clearedNotes = ReminderURLNoteMirror.apply(notes: "", showing: nil, replacing: oldURL)
+
+    #expect(clearedNotes != nil)
+    #expect(clearedNotes?.isEmpty == true)
+  }
+
   @Test("URL mirror preserves authored URL note lines")
   func preservesAuthoredURLLines() {
     let oldURL = URL(string: "https://example.com/old")!

@@ -12,9 +12,13 @@ enum ReminderURLNoteMirror {
       [previousURL, url].compactMap { candidate in
         candidate.map { mirrorLine(for: $0) }
       })
-    let base = removeManagedLines(from: notes, matching: candidateLines) ?? ""
+    let removal = removeManagedLines(from: notes, matching: candidateLines)
+    let base = removal.notes ?? ""
     guard let url else {
-      return base.isEmpty ? nil : base
+      if base.isEmpty, removal.removedManagedLine {
+        return nil
+      }
+      return removal.notes
     }
 
     let line = mirrorLine(for: url)
@@ -28,30 +32,40 @@ enum ReminderURLNoteMirror {
     "\(prefix)\(url.absoluteString)"
   }
 
-  private static func removeManagedLines(from notes: String?, matching candidateLines: Set<String>) -> String? {
+  private static func removeManagedLines(
+    from notes: String?,
+    matching candidateLines: Set<String>
+  ) -> (notes: String?, removedManagedLine: Bool) {
     guard !candidateLines.isEmpty, var text = notes else {
-      return notes
+      return (notes, false)
     }
 
+    var removedManagedLine = false
     for candidateLine in candidateLines {
-      text = removeManagedLine(candidateLine, from: text)
+      let removal = removeManagedLine(candidateLine, from: text)
+      text = removal.notes
+      removedManagedLine = removedManagedLine || removal.removedManagedLine
     }
-    return text
+    return (text, removedManagedLine)
   }
 
-  private static func removeManagedLine(_ candidateLine: String, from text: String) -> String {
+  private static func removeManagedLine(
+    _ candidateLine: String,
+    from text: String
+  ) -> (notes: String, removedManagedLine: Bool) {
     if text == candidateLine {
-      return ""
+      return ("", true)
     }
 
     for separator in ["\r\n\r\n", "\n\n", "\r\r"] {
       let generatedBlock = "\(separator)\(candidateLine)"
       if text.hasSuffix(generatedBlock) {
-        return String(text.dropLast(generatedBlock.count))
+        return (String(text.dropLast(generatedBlock.count)), true)
       }
     }
 
     var result = ""
+    var removedManagedLine = false
     var lineStart = text.startIndex
     while lineStart < text.endIndex {
       var lineEnd = lineStart
@@ -74,11 +88,13 @@ enum ReminderURLNoteMirror {
       let line = String(text[lineStart..<lineEnd])
       if line.trimmingCharacters(in: .whitespaces) != candidateLine {
         result += text[lineStart..<nextLineStart]
+      } else {
+        removedManagedLine = true
       }
       lineStart = nextLineStart
     }
 
-    return result
+    return (result, removedManagedLine)
   }
 
   private static func separator(beforeAppendingTo notes: String) -> String {
