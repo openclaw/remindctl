@@ -55,7 +55,7 @@ remindctl complete 1 2 3
 remindctl delete 4A83 --force
 ```
 
-URLs are stored in EventKit and mirrored into reminder notes as `remindctl URL: ...` so the link is visible in Reminders.app.
+URLs are stored in EventKit and mirrored into reminder notes as `remindctl URL (managed): ...` so the link is visible in Reminders.app.
 
 Indexes such as `1` come from the default reminder listing. Most commands also accept an ID prefix such as `4A83`.
 

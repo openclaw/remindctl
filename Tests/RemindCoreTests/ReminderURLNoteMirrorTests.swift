@@ -18,10 +18,11 @@ struct ReminderURLNoteMirrorTests {
   func createsToolOwnedURLLine() {
     let url = URL(string: "https://example.com/product")!
 
-    #expect(ReminderURLNoteMirror.apply(notes: nil, showing: url) == "remindctl URL: https://example.com/product")
+    #expect(
+      ReminderURLNoteMirror.apply(notes: nil, showing: url) == "remindctl URL (managed): https://example.com/product")
     #expect(
       ReminderURLNoteMirror.apply(notes: "Compare prices", showing: url)
-        == "Compare prices\n\nremindctl URL: https://example.com/product"
+        == "Compare prices\n\nremindctl URL (managed): https://example.com/product"
     )
   }
 
@@ -30,8 +31,9 @@ struct ReminderURLNoteMirrorTests {
     let url = URL(string: "https://example.com/product")!
 
     #expect(
-      ReminderURLNoteMirror.apply(notes: "Compare prices\n\nremindctl URL: https://example.com/product", showing: url)
-        == "Compare prices\n\nremindctl URL: https://example.com/product"
+      ReminderURLNoteMirror.apply(
+        notes: "Compare prices\n\nremindctl URL (managed): https://example.com/product", showing: url)
+        == "Compare prices\n\nremindctl URL (managed): https://example.com/product"
     )
   }
 
@@ -42,15 +44,15 @@ struct ReminderURLNoteMirrorTests {
 
     #expect(
       ReminderURLNoteMirror.apply(
-        notes: "Compare prices\n\nremindctl URL: https://example.com/old",
+        notes: "Compare prices\n\nremindctl URL (managed): https://example.com/old",
         showing: newURL,
         replacing: oldURL
       )
-        == "Compare prices\n\nremindctl URL: https://example.com/new"
+        == "Compare prices\n\nremindctl URL (managed): https://example.com/new"
     )
     #expect(
       ReminderURLNoteMirror.apply(
-        notes: "Compare prices\n\nremindctl URL: https://example.com/old",
+        notes: "Compare prices\n\nremindctl URL (managed): https://example.com/old",
         showing: nil,
         replacing: oldURL
       )
@@ -66,10 +68,10 @@ struct ReminderURLNoteMirrorTests {
 
     let withOldMirror = ReminderURLNoteMirror.apply(notes: authoredNotes, showing: oldURL)
 
-    #expect(withOldMirror == "  Keep spacing\n\n\n\nremindctl URL: https://example.com/old")
+    #expect(withOldMirror == "  Keep spacing\n\n\n\nremindctl URL (managed): https://example.com/old")
     #expect(
       ReminderURLNoteMirror.apply(notes: withOldMirror, showing: newURL, replacing: oldURL)
-        == "  Keep spacing\n\n\n\nremindctl URL: https://example.com/new"
+        == "  Keep spacing\n\n\n\nremindctl URL (managed): https://example.com/new"
     )
     #expect(ReminderURLNoteMirror.apply(notes: withOldMirror, showing: nil, replacing: oldURL) == authoredNotes)
   }
@@ -81,7 +83,7 @@ struct ReminderURLNoteMirrorTests {
 
     let withMirror = ReminderURLNoteMirror.apply(notes: authoredNotes, showing: url)
 
-    #expect(withMirror == "Line one\r\nLine two\r\n\r\nremindctl URL: https://example.com/product")
+    #expect(withMirror == "Line one\r\nLine two\r\n\r\nremindctl URL (managed): https://example.com/product")
     #expect(ReminderURLNoteMirror.apply(notes: withMirror, showing: nil, replacing: url) == authoredNotes)
   }
 
@@ -114,7 +116,30 @@ struct ReminderURLNoteMirrorTests {
         showing: newURL,
         replacing: oldURL
       )
-        == "URL: https://example.com/old\n\nremindctl URL: https://example.com/new"
+        == "URL: https://example.com/old\n\nremindctl URL (managed): https://example.com/new"
+    )
+  }
+
+  @Test("URL mirror preserves authored plain remindctl URL lines")
+  func preservesAuthoredPlainRemindctlURLLines() {
+    let oldURL = URL(string: "https://example.com/old")!
+    let newURL = URL(string: "https://example.com/new")!
+
+    #expect(
+      ReminderURLNoteMirror.apply(
+        notes: "remindctl URL: https://example.com/old",
+        showing: nil,
+        replacing: oldURL
+      )
+        == "remindctl URL: https://example.com/old"
+    )
+    #expect(
+      ReminderURLNoteMirror.apply(
+        notes: "remindctl URL: https://example.com/old",
+        showing: newURL,
+        replacing: oldURL
+      )
+        == "remindctl URL: https://example.com/old\n\nremindctl URL (managed): https://example.com/new"
     )
   }
 }
