@@ -8,17 +8,11 @@ enum ReminderURLNoteMirror {
       return notes
     }
 
-    let candidateLines = [previousURL, url].compactMap { candidate in
-      candidate.map { mirrorLine(for: $0) }
-    }
-    var lines = (notes ?? "").components(separatedBy: .newlines)
-    if !candidateLines.isEmpty {
-      lines.removeAll { line in
-        candidateLines.contains(line.trimmingCharacters(in: .whitespaces))
-      }
-    }
-
-    let base = lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+    let candidateLines = Set(
+      [previousURL, url].compactMap { candidate in
+        candidate.map { mirrorLine(for: $0) }
+      })
+    let base = removeManagedLines(from: notes, matching: candidateLines) ?? ""
     guard let url else {
       return base.isEmpty ? nil : base
     }
@@ -27,10 +21,73 @@ enum ReminderURLNoteMirror {
     if base.isEmpty {
       return line
     }
-    return "\(base)\n\n\(line)"
+    return "\(base)\(separator(beforeAppendingTo: base))\(line)"
   }
 
   private static func mirrorLine(for url: URL) -> String {
     "\(prefix)\(url.absoluteString)"
+  }
+
+  private static func removeManagedLines(from notes: String?, matching candidateLines: Set<String>) -> String? {
+    guard !candidateLines.isEmpty, var text = notes else {
+      return notes
+    }
+
+    for candidateLine in candidateLines {
+      text = removeManagedLine(candidateLine, from: text)
+    }
+    return text
+  }
+
+  private static func removeManagedLine(_ candidateLine: String, from text: String) -> String {
+    if text == candidateLine {
+      return ""
+    }
+
+    for separator in ["\r\n\r\n", "\n\n", "\r\r"] {
+      let generatedBlock = "\(separator)\(candidateLine)"
+      if text.hasSuffix(generatedBlock) {
+        return String(text.dropLast(generatedBlock.count))
+      }
+    }
+
+    var result = ""
+    var lineStart = text.startIndex
+    while lineStart < text.endIndex {
+      var lineEnd = lineStart
+      while lineEnd < text.endIndex, text[lineEnd] != "\n", text[lineEnd] != "\r" {
+        lineEnd = text.index(after: lineEnd)
+      }
+
+      var nextLineStart = lineEnd
+      if nextLineStart < text.endIndex {
+        if text[nextLineStart] == "\r" {
+          nextLineStart = text.index(after: nextLineStart)
+          if nextLineStart < text.endIndex, text[nextLineStart] == "\n" {
+            nextLineStart = text.index(after: nextLineStart)
+          }
+        } else {
+          nextLineStart = text.index(after: nextLineStart)
+        }
+      }
+
+      let line = String(text[lineStart..<lineEnd])
+      if line.trimmingCharacters(in: .whitespaces) != candidateLine {
+        result += text[lineStart..<nextLineStart]
+      }
+      lineStart = nextLineStart
+    }
+
+    return result
+  }
+
+  private static func separator(beforeAppendingTo notes: String) -> String {
+    if notes.contains("\r\n") {
+      return "\r\n\r\n"
+    }
+    if notes.contains("\r") {
+      return "\r\r"
+    }
+    return "\n\n"
   }
 }

@@ -58,6 +58,33 @@ struct ReminderURLNoteMirrorTests {
     )
   }
 
+  @Test("URL mirror preserves authored whitespace around replace and clear")
+  func preservesAuthoredWhitespaceAroundReplaceAndClear() {
+    let oldURL = URL(string: "https://example.com/old")!
+    let newURL = URL(string: "https://example.com/new")!
+    let authoredNotes = "  Keep spacing\n\n"
+
+    let withOldMirror = ReminderURLNoteMirror.apply(notes: authoredNotes, showing: oldURL)
+
+    #expect(withOldMirror == "  Keep spacing\n\n\n\nremindctl URL: https://example.com/old")
+    #expect(
+      ReminderURLNoteMirror.apply(notes: withOldMirror, showing: newURL, replacing: oldURL)
+        == "  Keep spacing\n\n\n\nremindctl URL: https://example.com/new"
+    )
+    #expect(ReminderURLNoteMirror.apply(notes: withOldMirror, showing: nil, replacing: oldURL) == authoredNotes)
+  }
+
+  @Test("URL mirror preserves authored newline style")
+  func preservesAuthoredNewlineStyle() {
+    let url = URL(string: "https://example.com/product")!
+    let authoredNotes = "Line one\r\nLine two"
+
+    let withMirror = ReminderURLNoteMirror.apply(notes: authoredNotes, showing: url)
+
+    #expect(withMirror == "Line one\r\nLine two\r\n\r\nremindctl URL: https://example.com/product")
+    #expect(ReminderURLNoteMirror.apply(notes: withMirror, showing: nil, replacing: url) == authoredNotes)
+  }
+
   @Test("URL mirror preserves authored URL note lines")
   func preservesAuthoredURLLines() {
     let oldURL = URL(string: "https://example.com/old")!
