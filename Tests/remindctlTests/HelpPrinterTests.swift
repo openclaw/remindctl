@@ -43,11 +43,13 @@ struct HelpPrinterTests {
     #expect(addHelp.contains("--location"))
     #expect(addHelp.contains("--leaving"))
     #expect(addHelp.contains("--url"))
+    #expect(addHelp.contains("--show-url-in-notes"))
     #expect(addHelp.contains("--repeat"))
     #expect(editHelp.contains("--alarm"))
     #expect(editHelp.contains("--clear-alarm"))
     #expect(editHelp.contains("--url"))
     #expect(editHelp.contains("--clear-url"))
+    #expect(editHelp.contains("--show-url-in-notes"))
     #expect(editHelp.contains("--repeat"))
     #expect(editHelp.contains("--no-repeat"))
   }

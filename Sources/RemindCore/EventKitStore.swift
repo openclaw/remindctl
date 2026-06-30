@@ -111,16 +111,15 @@ public actor RemindersStore {
     try eventStore.removeCalendar(calendar, commit: true)
   }
 
-  public func createReminder(_ draft: ReminderDraft, listName: String) async throws -> ReminderItem {
-    try await createReminder(draft, target: .name(listName))
-  }
-
   public func createReminder(_ draft: ReminderDraft, target: ReminderListTarget) async throws -> ReminderItem {
     let calendar = try calendar(matching: target)
     let reminder = EKReminder(eventStore: eventStore)
     reminder.title = draft.title
     reminder.url = draft.url
-    reminder.notes = ReminderURLNoteMirror.apply(notes: draft.notes, showing: draft.url)
+    reminder.notes =
+      draft.showURLInNotes
+      ? ReminderURLNoteMirror.apply(notes: draft.notes, showing: draft.url)
+      : draft.notes
     reminder.calendar = calendar
     reminder.priority = draft.priority.eventKitValue
     if let dueDate = draft.dueDate {
@@ -151,7 +150,7 @@ public actor RemindersStore {
     let previousURL = reminder.url
     update.notes.map { reminder.notes = $0 }
     update.url.map { reminder.url = $0 }
-    if update.notes != nil || update.url != nil {
+    if update.showURLInNotes == true {
       reminder.notes = ReminderURLNoteMirror.apply(notes: reminder.notes, showing: reminder.url, replacing: previousURL)
     }
     if let dueDateUpdate = update.dueDate {

@@ -25,7 +25,7 @@ enum EditCommand {
             .make(
               label: "url",
               names: [.long("url")],
-              help: "Set URL (stored in EventKit and shown in Reminders notes)",
+              help: "Set URL (stored in EventKit)",
               parsing: .singleValue
             ),
             .make(
@@ -45,6 +45,11 @@ enum EditCommand {
             .make(label: "clearDue", names: [.long("clear-due")], help: "Clear due date"),
             .make(label: "clearAlarm", names: [.long("clear-alarm")], help: "Clear alarm"),
             .make(label: "clearUrl", names: [.long("clear-url")], help: "Clear URL"),
+            .make(
+              label: "showURLInNotes",
+              names: [.long("show-url-in-notes")],
+              help: "Mirror the current URL into a managed Reminders notes line"
+            ),
             .make(label: "noRepeat", names: [.long("no-repeat")], help: "Remove recurrence"),
             .make(label: "complete", names: [.long("complete")], help: "Mark completed"),
             .make(label: "incomplete", names: [.long("incomplete")], help: "Mark incomplete"),
@@ -80,6 +85,7 @@ enum EditCommand {
       let notes = values.option("notes")
       let alarmValue = values.option("alarm")
       let repeatValue = values.option("repeat")
+      let showURLInNotes = values.flag("showURLInNotes")
 
       let urlUpdate = try parsedURLUpdate(urlValue: values.option("url"), clearURL: values.flag("clearUrl"))
 
@@ -132,7 +138,7 @@ enum EditCommand {
 
       let hasChanges =
         title != nil || targetList != nil || notes != nil || urlUpdate != nil || dueUpdate != nil
-        || alarmUpdate != nil || priority != nil || recurrenceUpdate != nil || isCompleted != nil
+        || alarmUpdate != nil || priority != nil || recurrenceUpdate != nil || isCompleted != nil || showURLInNotes
       if !hasChanges {
         throw RemindCoreError.operationFailed("No changes specified")
       }
@@ -141,6 +147,7 @@ enum EditCommand {
         title: title,
         notes: notes,
         url: urlUpdate,
+        showURLInNotes: showURLInNotes ? true : nil,
         dueDate: dueUpdate,
         alarmDate: alarmUpdate,
         recurrenceRule: recurrenceUpdate,

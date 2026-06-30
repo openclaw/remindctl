@@ -20,15 +20,22 @@ struct ModelsTests {
     // Draft: explicit url is preserved; default is nil.
     let draft = ReminderDraft(title: "Buy", notes: nil, url: url, dueDate: nil, priority: .none)
     #expect(draft.url == url)
+    #expect(draft.showURLInNotes == false)
     #expect(ReminderDraft(title: "Buy", notes: nil, dueDate: nil, priority: .none).url == nil)
+    #expect(
+      ReminderDraft(title: "Buy", notes: nil, url: url, showURLInNotes: true, dueDate: nil, priority: .none)
+        .showURLInNotes == true
+    )
 
     // Update double-optional: nil = leave, .some(nil) = clear, .some(url) = set.
     #expect(ReminderUpdate(title: "x").url == nil)
+    #expect(ReminderUpdate(title: "x").showURLInNotes == nil)
     let setUpdate = ReminderUpdate(url: .some(url))
     #expect(setUpdate.url! == url)
     let clearUpdate = ReminderUpdate(url: .some(nil))
     #expect(clearUpdate.url != nil)
     #expect(clearUpdate.url! == nil)
+    #expect(ReminderUpdate(url: .some(url), showURLInNotes: true).showURLInNotes == true)
   }
 
   @Test("Model initializers preserve defaults and explicit values")
@@ -76,6 +83,7 @@ struct ModelsTests {
     )
     #expect(update.title == "Updated")
     #expect(update.notes == nil)
+    #expect(update.showURLInNotes == nil)
     #expect(update.dueDate! == nil)
     #expect(update.alarmDate! == parsed)
     #expect(update.recurrenceRule! == nil)
