@@ -33,6 +33,8 @@ if [[ ! -f "$BINARY" ]]; then
   exit 1
 fi
 
-lipo "$BINARY" -verify_arch "${ARCH_LIST[@]}"
+for ARCH in "${ARCH_LIST[@]}"; do
+  lipo "$BINARY" -verify_arch "$ARCH"
+done
 lipo -info "$BINARY"
 file "$BINARY"

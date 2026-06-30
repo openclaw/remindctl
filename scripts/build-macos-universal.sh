@@ -24,9 +24,14 @@ mkdir -p "$(dirname "$OUTPUT")"
 
 BINARIES=()
 for ARCH in "${ARCH_LIST[@]}"; do
-  swift build -c release --product remindctl --arch "$ARCH"
+  SCRATCH_PATH="$ROOT/.build/$ARCH"
+  swift build -c release --product remindctl --arch "$ARCH" --scratch-path "$SCRATCH_PATH"
 
-  BINARY="$ROOT/.build/${ARCH}-apple-macosx/release/remindctl"
+  BIN_PATH="$(
+    swift build -c release --product remindctl --arch "$ARCH" \
+      --scratch-path "$SCRATCH_PATH" --show-bin-path
+  )"
+  BINARY="$BIN_PATH/remindctl"
   if [[ ! -f "$BINARY" ]]; then
     echo "Expected build output not found: $BINARY" >&2
     exit 1
@@ -36,5 +41,7 @@ for ARCH in "${ARCH_LIST[@]}"; do
 done
 
 lipo -create "${BINARIES[@]}" -output "$OUTPUT"
-lipo "$OUTPUT" -verify_arch "${ARCH_LIST[@]}"
+for ARCH in "${ARCH_LIST[@]}"; do
+  lipo "$OUTPUT" -verify_arch "$ARCH"
+done
 lipo -info "$OUTPUT"
