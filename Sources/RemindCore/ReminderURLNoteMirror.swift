@@ -4,6 +4,10 @@ enum ReminderURLNoteMirror {
   private static let prefix = "remindctl URL: "
 
   static func apply(notes: String?, showing url: URL?, replacing previousURL: URL? = nil) -> String? {
+    guard url != nil || previousURL != nil else {
+      return notes
+    }
+
     let candidateLines = [previousURL, url].compactMap { candidate in
       candidate.map { mirrorLine(for: $0) }
     }

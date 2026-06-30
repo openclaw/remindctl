@@ -4,6 +4,16 @@ import Testing
 @testable import RemindCore
 
 struct ReminderURLNoteMirrorTests {
+  @Test("URL mirror preserves notes-only text when no mirror is involved")
+  func preservesNotesOnlyTextWhenNoMirrorIsInvolved() {
+    let emptyNote = ReminderURLNoteMirror.apply(notes: "", showing: nil)
+
+    #expect(ReminderURLNoteMirror.apply(notes: "  Keep spacing\n\n", showing: nil) == "  Keep spacing\n\n")
+    #expect(emptyNote != nil)
+    #expect(emptyNote?.isEmpty == true)
+    #expect(ReminderURLNoteMirror.apply(notes: nil, showing: nil) == nil)
+  }
+
   @Test("URL mirror creates a tool-owned app-visible note line")
   func createsToolOwnedURLLine() {
     let url = URL(string: "https://example.com/product")!
