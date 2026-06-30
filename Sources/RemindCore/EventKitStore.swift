@@ -2,11 +2,6 @@ import CoreLocation
 import EventKit
 import Foundation
 
-private func isAllDay(_ components: DateComponents?) -> Bool {
-  guard let components else { return false }
-  return components.hour == nil && components.minute == nil && components.second == nil
-}
-
 public actor RemindersStore {
   private let eventStore = EKEventStore()
   private let calendar: Calendar
@@ -124,8 +119,8 @@ public actor RemindersStore {
     let calendar = try calendar(matching: target)
     let reminder = EKReminder(eventStore: eventStore)
     reminder.title = draft.title
-    reminder.notes = draft.notes
     reminder.url = draft.url
+    reminder.notes = ReminderURLNoteMirror.apply(notes: draft.notes, showing: draft.url)
     reminder.calendar = calendar
     reminder.priority = draft.priority.eventKitValue
     if let dueDate = draft.dueDate {
@@ -153,8 +148,12 @@ public actor RemindersStore {
       reminder.title = title
     }
     // Simple optional fields: outer optional present => apply. For url, inner nil clears it.
+    let previousURL = reminder.url
     update.notes.map { reminder.notes = $0 }
     update.url.map { reminder.url = $0 }
+    if update.notes != nil || update.url != nil {
+      reminder.notes = ReminderURLNoteMirror.apply(notes: reminder.notes, showing: reminder.url, replacing: previousURL)
+    }
     if let dueDateUpdate = update.dueDate {
       if let dueDate = dueDateUpdate {
         reminder.dueDateComponents = nil

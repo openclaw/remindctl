@@ -35,7 +35,7 @@ enum AddCommand {
             .make(
               label: "url",
               names: [.long("url")],
-              help: "URL (Reminders dedicated URL field)",
+              help: "URL (stored in EventKit and shown in Reminders notes)",
               parsing: .singleValue
             ),
             .make(
