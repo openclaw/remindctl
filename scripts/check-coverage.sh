@@ -16,13 +16,13 @@ echo "==> swift test --enable-code-coverage (isolated build dir)"
 swift test --enable-code-coverage --build-path "${COVERAGE_BUILD_PATH}" --cache-path "${CACHE_PATH}" >/dev/null
 
 REPORT_JSON="$(
-  find "${COVERAGE_BUILD_PATH}" -type f -path "*debug/codecov/remindctl.json" -print0 2>/dev/null \
+  find "${COVERAGE_BUILD_PATH}" -type f -path "*/codecov/remindctl.json" -print0 2>/dev/null \
     | xargs -0 ls -t 2>/dev/null \
     | head -n 1
 )"
 
 if [ -z "${REPORT_JSON}" ] || [ ! -f "${REPORT_JSON}" ]; then
-  echo "ERROR: Coverage report not found (expected .build/**/debug/codecov/remindctl.json)." >&2
+  echo "ERROR: Coverage report not found (expected .build/**/codecov/remindctl.json)." >&2
   exit 1
 fi
 
