@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.2 - Unreleased
+## 0.3.2 - 2026-07-01
 - Make `--url` visible in Reminders.app by retaining the EventKit URL and mirroring one managed notes link; `--clear-url` removes only that link; thanks @TurboTheTurtle.
 - Build the release archive as a universal arm64/x86_64 macOS binary and verify both slices before publishing; thanks @TurboTheTurtle.
 - Update GitHub Actions workflows to `actions/checkout@v7` for current dependency and fork-checkout security fixes.
