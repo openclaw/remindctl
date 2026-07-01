@@ -2,11 +2,6 @@ import CoreLocation
 import EventKit
 import Foundation
 
-private func isAllDay(_ components: DateComponents?) -> Bool {
-  guard let components else { return false }
-  return components.hour == nil && components.minute == nil && components.second == nil
-}
-
 public actor RemindersStore {
   private let eventStore = EKEventStore()
   private let calendar: Calendar
@@ -116,16 +111,13 @@ public actor RemindersStore {
     try eventStore.removeCalendar(calendar, commit: true)
   }
 
-  public func createReminder(_ draft: ReminderDraft, listName: String) async throws -> ReminderItem {
-    try await createReminder(draft, target: .name(listName))
-  }
-
   public func createReminder(_ draft: ReminderDraft, target: ReminderListTarget) async throws -> ReminderItem {
     let calendar = try calendar(matching: target)
     let reminder = EKReminder(eventStore: eventStore)
     reminder.title = draft.title
-    reminder.notes = draft.notes
     reminder.url = draft.url
+    // Reminders.app does not surface EventKit's URL field, so also keep one managed notes link.
+    reminder.notes = ReminderURLNoteMirror.apply(notes: draft.notes, showing: draft.url)
     reminder.calendar = calendar
     reminder.priority = draft.priority.eventKitValue
     if let dueDate = draft.dueDate {
@@ -152,9 +144,15 @@ public actor RemindersStore {
     if let title = update.title {
       reminder.title = title
     }
-    // Simple optional fields: outer optional present => apply. For url, inner nil clears it.
-    update.notes.map { reminder.notes = $0 }
-    update.url.map { reminder.url = $0 }
+    if update.notes != nil || update.url != nil {
+      let merged = ReminderURLNoteMirror.applyingUpdates(
+        currentNotes: reminder.notes,
+        currentURL: reminder.url,
+        notesUpdate: update.notes,
+        urlUpdate: update.url
+      )
+      (reminder.notes, reminder.url) = (merged.notes, merged.url)
+    }
     if let dueDateUpdate = update.dueDate {
       if let dueDate = dueDateUpdate {
         reminder.dueDateComponents = nil

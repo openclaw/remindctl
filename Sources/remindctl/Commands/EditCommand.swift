@@ -22,7 +22,12 @@ enum EditCommand {
             .make(label: "due", names: [.short("d"), .long("due")], help: "Set due date", parsing: .singleValue),
             .make(label: "alarm", names: [.short("a"), .long("alarm")], help: "Set alarm date", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Set notes", parsing: .singleValue),
-            .make(label: "url", names: [.long("url")], help: "Set URL", parsing: .singleValue),
+            .make(
+              label: "url",
+              names: [.long("url")],
+              help: "Set URL (stored in EventKit and shown in Reminders notes)",
+              parsing: .singleValue
+            ),
             .make(
               label: "repeat",
               names: [.short("r"), .long("repeat")],

@@ -55,6 +55,8 @@ remindctl complete 1 2 3
 remindctl delete 4A83 --force
 ```
 
+URLs remain stored in EventKit and are also mirrored to a `remindctl URL (managed): ...` notes line so they are visible in Reminders.app. `--clear-url` removes the EventKit value and only that managed notes line.
+
 Indexes such as `1` come from the default reminder listing. Most commands also accept an ID prefix such as `4A83`.
 
 ## Commands

@@ -51,6 +51,7 @@ Useful `add` options:
 - `--notes <text>` adds notes.
 - `--repeat <rule>` sets simple recurrence.
 - `--priority <none|low|medium|high>` sets priority.
+- `--url <url>` stores the EventKit URL and mirrors it into notes as `remindctl URL (managed): ...` so Reminders.app shows the link.
 - `--location <address>` creates an arriving geofence trigger.
 - `--leaving` changes a location trigger to leaving.
 - `--radius <meters>` adjusts the geofence radius.
