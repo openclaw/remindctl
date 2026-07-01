@@ -3,6 +3,7 @@
 ## 0.3.2 - Unreleased
 - Make `--url` visible in Reminders.app by retaining the EventKit URL and mirroring one managed notes link; `--clear-url` removes only that link; thanks @TurboTheTurtle.
 - Build the release archive as a universal arm64/x86_64 macOS binary and verify both slices before publishing; thanks @TurboTheTurtle.
+- Update GitHub Actions workflows to `actions/checkout@v7` for current dependency and fork-checkout security fixes.
 
 ## 0.3.1 - 2026-06-11
 - Add support for setting the reminder URL field via `--url` on `add`/`edit` and `--clear-url` on `edit`; thanks @jeremylahners.
