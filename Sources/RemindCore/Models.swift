@@ -165,7 +165,6 @@ public struct ReminderDraft: Sendable {
   public let title: String
   public let notes: String?
   public let url: URL?
-  public let showURLInNotes: Bool
   public let dueDate: ParsedUserDate?
   public let alarmDate: ParsedUserDate?
   public let recurrenceRule: RecurrenceRule?
@@ -176,7 +175,6 @@ public struct ReminderDraft: Sendable {
     title: String,
     notes: String?,
     url: URL? = nil,
-    showURLInNotes: Bool = false,
     dueDate: ParsedUserDate?,
     alarmDate: ParsedUserDate? = nil,
     recurrenceRule: RecurrenceRule? = nil,
@@ -186,7 +184,6 @@ public struct ReminderDraft: Sendable {
     self.title = title
     self.notes = notes
     self.url = url
-    self.showURLInNotes = showURLInNotes
     self.dueDate = dueDate
     self.alarmDate = alarmDate
     self.recurrenceRule = recurrenceRule
@@ -200,7 +197,6 @@ public struct ReminderUpdate: Sendable {
   public let notes: String?
   // Double optional: nil = leave unchanged, .some(nil) = clear, .some(url) = set.
   public let url: URL??
-  public let showURLInNotes: Bool?
   public let dueDate: ParsedUserDate??
   public let alarmDate: ParsedUserDate??
   public let recurrenceRule: RecurrenceRule??
@@ -213,7 +209,6 @@ public struct ReminderUpdate: Sendable {
     title: String? = nil,
     notes: String? = nil,
     url: URL?? = nil,
-    showURLInNotes: Bool? = nil,
     dueDate: ParsedUserDate?? = nil,
     alarmDate: ParsedUserDate?? = nil,
     recurrenceRule: RecurrenceRule?? = nil,
@@ -225,7 +220,6 @@ public struct ReminderUpdate: Sendable {
     self.title = title
     self.notes = notes
     self.url = url
-    self.showURLInNotes = showURLInNotes
     self.dueDate = dueDate
     self.alarmDate = alarmDate
     self.recurrenceRule = recurrenceRule

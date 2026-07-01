@@ -116,10 +116,8 @@ public actor RemindersStore {
     let reminder = EKReminder(eventStore: eventStore)
     reminder.title = draft.title
     reminder.url = draft.url
-    reminder.notes =
-      draft.showURLInNotes
-      ? ReminderURLNoteMirror.apply(notes: draft.notes, showing: draft.url)
-      : draft.notes
+    // Reminders.app does not surface EventKit's URL field, so also keep one managed notes link.
+    reminder.notes = ReminderURLNoteMirror.apply(notes: draft.notes, showing: draft.url)
     reminder.calendar = calendar
     reminder.priority = draft.priority.eventKitValue
     if let dueDate = draft.dueDate {
@@ -146,12 +144,14 @@ public actor RemindersStore {
     if let title = update.title {
       reminder.title = title
     }
-    // Simple optional fields: outer optional present => apply. For url, inner nil clears it.
-    let previousURL = reminder.url
-    update.notes.map { reminder.notes = $0 }
-    update.url.map { reminder.url = $0 }
-    if update.showURLInNotes == true {
-      reminder.notes = ReminderURLNoteMirror.apply(notes: reminder.notes, showing: reminder.url, replacing: previousURL)
+    if update.notes != nil || update.url != nil {
+      let merged = ReminderURLNoteMirror.applyingUpdates(
+        currentNotes: reminder.notes,
+        currentURL: reminder.url,
+        notesUpdate: update.notes,
+        urlUpdate: update.url
+      )
+      (reminder.notes, reminder.url) = (merged.notes, merged.url)
     }
     if let dueDateUpdate = update.dueDate {
       if let dueDate = dueDateUpdate {

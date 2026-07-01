@@ -35,7 +35,7 @@ enum AddCommand {
             .make(
               label: "url",
               names: [.long("url")],
-              help: "URL (stored in EventKit)",
+              help: "URL (stored in EventKit and shown in Reminders notes)",
               parsing: .singleValue
             ),
             .make(
@@ -52,12 +52,7 @@ enum AddCommand {
             ),
           ],
           flags: [
-            .make(label: "leaving", names: [.long("leaving")], help: "Trigger when leaving location"),
-            .make(
-              label: "showURLInNotes",
-              names: [.long("show-url-in-notes")],
-              help: "Mirror --url into a managed Reminders notes line"
-            ),
+            .make(label: "leaving", names: [.long("leaving")], help: "Trigger when leaving location")
           ]
         )
       ),
@@ -94,10 +89,6 @@ enum AddCommand {
       let listID = values.option("listID")
       let notes = values.option("notes")
       let url = try values.option("url").map(CommandHelpers.parseURL)
-      let showURLInNotes = values.flag("showURLInNotes")
-      if showURLInNotes && url == nil {
-        throw RemindCoreError.operationFailed("Use --show-url-in-notes with --url")
-      }
       let dueValue = values.option("due")
       let alarmValue = values.option("alarm")
       let locationValue = values.option("location")
@@ -132,7 +123,6 @@ enum AddCommand {
         title: title,
         notes: notes,
         url: url,
-        showURLInNotes: showURLInNotes,
         dueDate: dueDate,
         alarmDate: alarmDate,
         recurrenceRule: recurrenceRule,

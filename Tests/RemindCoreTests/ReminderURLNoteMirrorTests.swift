@@ -4,6 +4,45 @@ import Testing
 @testable import RemindCore
 
 struct ReminderURLNoteMirrorTests {
+  @Test("Notes-only updates keep the current URL visible")
+  func notesOnlyUpdatesKeepCurrentURLVisible() {
+    let url = URL(string: "https://example.com/product")!
+
+    let updated = ReminderURLNoteMirror.applyingUpdates(
+      currentNotes: "Old notes\n\nremindctl URL (managed): https://example.com/product",
+      currentURL: url,
+      notesUpdate: "New notes",
+      urlUpdate: nil
+    )
+
+    #expect(updated.url == url)
+    #expect(updated.notes == "New notes\n\nremindctl URL (managed): https://example.com/product")
+  }
+
+  @Test("URL updates merge set and clear behavior with current notes")
+  func urlUpdatesMergeWithCurrentNotes() {
+    let oldURL = URL(string: "https://example.com/old")!
+    let newURL = URL(string: "https://example.com/new")!
+
+    let replaced = ReminderURLNoteMirror.applyingUpdates(
+      currentNotes: "Notes\n\nremindctl URL (managed): https://example.com/old",
+      currentURL: oldURL,
+      notesUpdate: nil,
+      urlUpdate: .some(newURL)
+    )
+    #expect(replaced.url == newURL)
+    #expect(replaced.notes == "Notes\n\nremindctl URL (managed): https://example.com/new")
+
+    let cleared = ReminderURLNoteMirror.applyingUpdates(
+      currentNotes: replaced.notes,
+      currentURL: replaced.url,
+      notesUpdate: nil,
+      urlUpdate: .some(nil)
+    )
+    #expect(cleared.url == nil)
+    #expect(cleared.notes == "Notes")
+  }
+
   @Test("URL mirror preserves notes-only text when no mirror is involved")
   func preservesNotesOnlyTextWhenNoMirrorIsInvolved() {
     let emptyNote = ReminderURLNoteMirror.apply(notes: "", showing: nil)

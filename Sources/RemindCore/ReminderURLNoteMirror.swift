@@ -3,6 +3,17 @@ import Foundation
 enum ReminderURLNoteMirror {
   private static let prefix = "remindctl URL (managed): "
 
+  static func applyingUpdates(
+    currentNotes: String?,
+    currentURL: URL?,
+    notesUpdate: String?,
+    urlUpdate: URL??
+  ) -> (notes: String?, url: URL?) {
+    let nextNotes = notesUpdate ?? currentNotes
+    let nextURL = urlUpdate ?? currentURL
+    return (apply(notes: nextNotes, showing: nextURL, replacing: currentURL), nextURL)
+  }
+
   static func apply(notes: String?, showing url: URL?, replacing previousURL: URL? = nil) -> String? {
     guard url != nil || previousURL != nil else {
       return notes
