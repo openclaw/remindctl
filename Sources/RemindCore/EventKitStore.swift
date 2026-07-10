@@ -157,15 +157,12 @@ public actor RemindersStore {
       if let dueDate = dueDateUpdate {
         reminder.dueDateComponents = nil
         reminder.dueDateComponents = calendarComponents(from: dueDate)
-        if update.alarmDate == nil && !dueDate.isDateOnly {
-          replaceAlarms(on: reminder, with: dueDate.date)
-        }
       } else {
         reminder.dueDateComponents = nil
       }
     }
     if let alarmDateUpdate = update.alarmDate {
-      replaceAlarms(on: reminder, with: alarmDateUpdate?.date)
+      ReminderAlarmMutation.replaceDateAlarms(on: reminder, with: alarmDateUpdate?.date)
     }
     if let recurrenceUpdate = update.recurrenceRule {
       replaceRecurrence(on: reminder, with: recurrenceUpdate)
@@ -380,15 +377,6 @@ extension RemindersStore {
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
-  }
-
-  private func replaceAlarms(on reminder: EKReminder, with date: Date?) {
-    for alarm in reminder.alarms ?? [] {
-      reminder.removeAlarm(alarm)
-    }
-    if let date {
-      reminder.addAlarm(EKAlarm(absoluteDate: date))
-    }
   }
 
   private static func alarmDate(from reminder: EKReminder) -> Date? {

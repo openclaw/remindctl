@@ -83,27 +83,12 @@ enum EditCommand {
 
       let urlUpdate = try parsedURLUpdate(urlValue: values.option("url"), clearURL: values.flag("clearUrl"))
 
-      var dueUpdate: ParsedUserDate??
-      if let dueValue = values.option("due") {
-        dueUpdate = try CommandHelpers.parseDueDate(dueValue)
-      }
-      if values.flag("clearDue") {
-        if dueUpdate != nil {
-          throw RemindCoreError.operationFailed("Use either --due or --clear-due, not both")
-        }
-        dueUpdate = .some(nil)
-      }
-
-      var alarmUpdate: ParsedUserDate??
-      if let alarmValue {
-        alarmUpdate = try CommandHelpers.parseDueDate(alarmValue)
-      }
-      if values.flag("clearAlarm") {
-        if alarmUpdate != nil {
-          throw RemindCoreError.operationFailed("Use either --alarm or --clear-alarm, not both")
-        }
-        alarmUpdate = .some(nil)
-      }
+      let dateUpdates = try parsedDateUpdates(
+        dueValue: values.option("due"),
+        clearDue: values.flag("clearDue"),
+        alarmValue: alarmValue,
+        clearAlarm: values.flag("clearAlarm")
+      )
 
       var recurrenceUpdate: RecurrenceRule??
       if let repeatValue {
@@ -131,8 +116,8 @@ enum EditCommand {
       let targetList = try CommandHelpers.listTarget(name: listName, id: listID)
 
       let hasChanges =
-        title != nil || targetList != nil || notes != nil || urlUpdate != nil || dueUpdate != nil
-        || alarmUpdate != nil || priority != nil || recurrenceUpdate != nil || isCompleted != nil
+        title != nil || targetList != nil || notes != nil || urlUpdate != nil || dateUpdates.dueDate != nil
+        || dateUpdates.alarmDate != nil || priority != nil || recurrenceUpdate != nil || isCompleted != nil
       if !hasChanges {
         throw RemindCoreError.operationFailed("No changes specified")
       }
@@ -141,8 +126,8 @@ enum EditCommand {
         title: title,
         notes: notes,
         url: urlUpdate,
-        dueDate: dueUpdate,
-        alarmDate: alarmUpdate,
+        dueDate: dateUpdates.dueDate,
+        alarmDate: dateUpdates.alarmDate,
         recurrenceRule: recurrenceUpdate,
         priority: priority,
         listTarget: targetList,
@@ -162,5 +147,42 @@ enum EditCommand {
       return try CommandHelpers.parseURL(urlValue)
     }
     return clearURL ? .some(nil) : nil
+  }
+
+  struct DateUpdates {
+    let dueDate: ParsedUserDate??
+    let alarmDate: ParsedUserDate??
+  }
+
+  static func parsedDateUpdates(
+    dueValue: String?,
+    clearDue: Bool,
+    alarmValue: String?,
+    clearAlarm: Bool
+  ) throws -> DateUpdates {
+    if dueValue != nil && clearDue {
+      throw RemindCoreError.operationFailed("Use either --due or --clear-due, not both")
+    }
+    if alarmValue != nil && clearAlarm {
+      throw RemindCoreError.operationFailed("Use either --alarm or --clear-alarm, not both")
+    }
+
+    let dueDate: ParsedUserDate?? =
+      if let dueValue {
+        try CommandHelpers.parseDueDate(dueValue)
+      } else if clearDue {
+        .some(nil)
+      } else {
+        nil
+      }
+    let alarmDate: ParsedUserDate?? =
+      if let alarmValue {
+        try CommandHelpers.parseDueDate(alarmValue)
+      } else if clearAlarm {
+        .some(nil)
+      } else {
+        nil
+      }
+    return DateUpdates(dueDate: dueDate, alarmDate: alarmDate)
   }
 }
