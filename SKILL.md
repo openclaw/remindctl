@@ -1,7 +1,7 @@
 ---
 name: apple-reminders
-description: Use remindctl to inspect and manage Apple Reminders on macOS 14+, including show/list/add/edit/complete/delete/status/authorize workflows, due dates, alarms, recurrence, and location triggers.
-homepage: https://github.com/steipete/remindctl
+description: "Use remindctl to inspect and manage Apple Reminders on macOS 14+, including show/list/add/edit/complete/delete/status/authorize workflows, due dates, alarms, recurrence, and location triggers."
+homepage: https://github.com/openclaw/remindctl
 ---
 
 # Apple Reminders
@@ -120,6 +120,7 @@ Rules:
 - Date-only inputs create all-day reminders
 - Date-time inputs create timed reminders
 - Timed due reminders get a notification alarm at the due time unless `--alarm` overrides it
+- Due-only edits preserve every alarm; explicit alarm edits preserve relative and location-based alarms
 
 If the user provides only a calendar date, prefer a date-only value instead of inventing a time.
 

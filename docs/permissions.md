@@ -38,3 +38,9 @@ remindctl status
 ```
 
 When running over SSH, grant access on the Mac that actually runs `remindctl`.
+
+## Signed binary upgrades
+
+Observed development grants are attributed to the host terminal application (Terminal or Ghostty), not to the `remindctl` executable. The official binary keeps the identifier `com.steipete.remindctl`, but identifier continuity alone does not prove that macOS will preserve Reminders access while the signing Team changes to OpenClaw Foundation.
+
+Release qualification therefore includes a separate clean-VM migration gate. Until that test records the actual TCC principal and proves read/write behavior across the upgrade, release notes and support guidance must not claim permission continuity.

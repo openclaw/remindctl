@@ -1,134 +1,112 @@
-name: release
+name: release verification
+run-name: verify ${{ inputs.draft && 'draft' || 'published' }} ${{ inputs.tag }}
 
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to (re)release (e.g. v0.1.0)"
+        description: "Release tag to verify (for example v0.3.3)"
         required: true
         type: string
+      draft:
+        description: "Verify a draft release"
+        required: true
+        default: true
+        type: boolean
 
+# Draft releases require write-visible contents access. The token is exposed only
+# to the download step and is explicitly absent during verification/execution.
 permissions:
   contents: write
 
 jobs:
-  release:
-    runs-on: macos-15
-    outputs:
-      tag: ${{ steps.tag.outputs.tag }}
+  verify-native-release:
+    name: native-${{ matrix.host_arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            host_arch: arm64
+          - runner: macos-15-intel
+            host_arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
     steps:
-      - name: Checkout
+      - name: Require protected default-branch workflow
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+          REPOSITORY: ${{ github.repository }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+        run: |
+          expected="$REPOSITORY/.github/workflows/release.yml@refs/heads/$DEFAULT_BRANCH"
+          if [[ "$WORKFLOW_REF" != "$expected" ]]; then
+            echo "::error::Verifier must run from protected workflow ref $expected"
+            exit 1
+          fi
+          if [[ "$EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "::error::Verifier only accepts an explicit protected workflow dispatch"
+            exit 1
+          fi
+          if [[ "$EVENT_REF" != "refs/heads/$DEFAULT_BRANCH" ]]; then
+            echo "::error::Manual verification must target $DEFAULT_BRANCH"
+            exit 1
+          fi
+
+      - name: Check out trusted verifier revision
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          persist-credentials: false
+          ref: ${{ github.workflow_sha }}
 
-      - name: Determine tag
-        id: tag
+      - name: Require native host architecture
         shell: bash
         env:
+          EXPECTED_HOST_ARCH: ${{ matrix.host_arch }}
+        run: |
+          actual="$(uname -m)"
+          if [[ "$actual" != "$EXPECTED_HOST_ARCH" ]]; then
+            echo "::error::Expected native $EXPECTED_HOST_ARCH host; found $actual"
+            exit 1
+          fi
+
+      - name: Resolve requested release
+        id: release
+        shell: bash
+        env:
+          INPUT_DRAFT: ${{ inputs.draft }}
           INPUT_TAG: ${{ inputs.tag }}
         run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            printf 'tag=%s\n' "$INPUT_TAG" >> "$GITHUB_OUTPUT"
+          tag="$INPUT_TAG"
+          if [[ "$INPUT_DRAFT" == "true" ]]; then
+            state="draft"
           else
-            printf 'tag=%s\n' "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            state="published"
           fi
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid release tag: $tag"
+            exit 1
+          fi
+          printf 'tag=%s\nstate=%s\n' "$tag" "$state" >>"$GITHUB_OUTPUT"
 
-      - name: Checkout release tag
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+      - name: Download exact release asset inventory
         env:
-          RELEASE_TAG: ${{ steps.tag.outputs.tag }}
-        run: git checkout --detach "$RELEASE_TAG"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQUIRE_GH_TOKEN: 1
+          RELEASE_STATE: ${{ steps.release.outputs.state }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          TRUSTED_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: scripts/download-release-assets.sh "$RELEASE_TAG" "$RELEASE_STATE" "$RUNNER_TEMP/remindctl-download"
 
-      - name: Resolve packages
-        run: swift package resolve
-
-      - name: Package universal macOS artifact
-        run: scripts/package-macos-release.sh
-
-      - name: Extract release notes from CHANGELOG
-        shell: bash
+      - name: Verify native artifact without draft token
         env:
-          TAG: ${{ steps.tag.outputs.tag }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          SOURCE_PROOF_FILE: ${{ runner.temp }}/remindctl-download/source-proof.json
         run: |
-          version="${TAG#v}"
-          notes_file="/tmp/release-notes.md"
-
-          awk -v v="$version" '
-            $0 ~ ("^## " v "($|[[:space:]]-)") { in_section=1; next }
-            in_section && $0 ~ "^## " { exit }
-            in_section { print }
-          ' CHANGELOG.md > "$notes_file"
-
-          if ! grep -q '[^[:space:]]' "$notes_file"; then
-            echo "No CHANGELOG.md section found for version $version" >&2
-            exit 1
-          fi
-
-      - name: Publish release assets
-        uses: softprops/action-gh-release@v3
-        with:
-          files: dist/remindctl-macos.zip
-          tag_name: ${{ steps.tag.outputs.tag }}
-          body_path: /tmp/release-notes.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  update-homebrew-tap:
-    runs-on: ubuntu-latest
-    needs: release
-    steps:
-      - name: Resolve release tag
-        env:
-          RELEASE_TAG: ${{ needs.release.outputs.tag }}
-        run: printf 'RELEASE_TAG=%s\n' "$RELEASE_TAG" >> "$GITHUB_ENV"
-
-      - name: Dispatch tap formula update
-        env:
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "::error::Set HOMEBREW_TAP_TOKEN with workflow access to steipete/homebrew-tap"
-            exit 1
-          fi
-
-          request_id="remindctl-${RELEASE_TAG}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          expected_title="Update remindctl for ${RELEASE_TAG} (${request_id})"
-
-          gh workflow run update-formula.yml \
-            --repo steipete/homebrew-tap \
-            --ref main \
-            -f formula=remindctl \
-            -f tag="$RELEASE_TAG" \
-            -f repository=steipete/remindctl \
-            -f macos_artifact=remindctl-macos.zip \
-            -f request_id="$request_id"
-
-          run_id=""
-          for _ in {1..30}; do
-            run_id=$(gh run list \
-              --repo steipete/homebrew-tap \
-              --workflow update-formula.yml \
-              --branch main \
-              --event workflow_dispatch \
-              --limit 20 \
-              --json databaseId,displayTitle \
-              --jq ".[] | select(.displayTitle == \"$expected_title\") | .databaseId" | head -n1)
-            if [ -n "$run_id" ]; then
-              break
-            fi
-            sleep 5
-          done
-
-          if [ -z "$run_id" ]; then
-            echo "::error::Could not find tap workflow run with title: $expected_title"
-            exit 1
-          fi
-
-          gh run watch "$run_id" \
-            --repo steipete/homebrew-tap \
-            --exit-status \
-            --interval 10
+          env -u GH_TOKEN -u GITHUB_TOKEN -u HOMEBREW_GITHUB_API_TOKEN \
+            -u ACTIONS_RUNTIME_TOKEN -u ACTIONS_ID_TOKEN_REQUEST_TOKEN \
+            scripts/verify-macos-release.sh "$RELEASE_TAG" "$RUNNER_TEMP/remindctl-download/assets"
