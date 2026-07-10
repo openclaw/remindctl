@@ -174,6 +174,7 @@ remindctl edit 4A83 --clear-alarm
 ```
 
 This is public EventKit alarm support. Apple's private Reminders "Urgent" toggle is not exposed by EventKit.
+Changing or clearing only the due date leaves every alarm unchanged. Explicit `--alarm` and `--clear-alarm` operations replace or clear absolute alarms while preserving relative and location-based alarms.
 
 ## Repeat
 
@@ -300,6 +301,8 @@ Supporting those would require Apple to expose new public APIs or a separate non
 ```bash
 make remindctl ARGS="status"   # clean build + run
 make check                     # strict lint + tests + 90% coverage gate
+make release-harness           # credential-free release-policy mocks
+make macos-artifact            # ad-hoc universal local candidate; never publish
 make release-check TAG=vX.Y.Z  # validate release preflight
 pnpm build                     # release build into ./bin/remindctl
 ```

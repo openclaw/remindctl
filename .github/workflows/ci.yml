@@ -12,15 +12,21 @@ jobs:
       - uses: actions/checkout@v7
       - name: Swift version
         run: swift --version
-      - name: Install SwiftLint
-        run: brew install swiftlint
+      - name: Install linters
+        run: brew install swiftlint shellcheck actionlint
       - name: Generate version files
         run: scripts/generate-version.sh
       - name: Swift format lint
         run: swift format lint --recursive Sources Tests
       - name: SwiftLint
         run: swiftlint --strict
+      - name: Shell and workflow lint
+        run: shellcheck -x scripts/*.sh && actionlint .github/workflows/*.yml
       - name: Swift test + coverage
         run: scripts/check-coverage.sh
       - name: Swift build
         run: swift build -c release --product remindctl
+      - name: Credential-free release harness
+        run: scripts/test-release.sh
+      - name: Credential-free universal candidate
+        run: make macos-artifact

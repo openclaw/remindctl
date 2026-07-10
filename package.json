@@ -1,15 +1,16 @@
 {
   "name": "remindctl",
-  "version": "0.3.0",
+  "version": "0.3.3",
   "private": true,
   "scripts": {
     "version:sync": "scripts/generate-version.sh",
     "remindctl": "pnpm -s version:sync && swift package clean && swift run remindctl",
     "start": "pnpm -s remindctl",
     "format": "swift format --in-place --recursive Sources Tests",
-    "lint": "swift format lint --recursive Sources Tests && swiftlint --strict",
+    "lint": "swift format lint --recursive Sources Tests && swiftlint --strict && shellcheck -x scripts/*.sh && actionlint .github/workflows/*.yml",
     "test": "pnpm -s version:sync && swift test --enable-code-coverage",
     "coverage": "scripts/check-coverage.sh",
+    "release:harness": "scripts/test-release.sh",
     "release:check": "scripts/check-release.sh",
     "check": "pnpm -s lint && pnpm -s test && pnpm -s coverage",
     "docs:site": "node scripts/build-docs-site.mjs",

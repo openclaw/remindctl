@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# shellcheck source=version.env
 source "$ROOT/version.env"
 OUTPUT="$ROOT/Sources/remindctl/Version.swift"
 PLIST_OUTPUT="$ROOT/Sources/remindctl/Resources/Info.plist"

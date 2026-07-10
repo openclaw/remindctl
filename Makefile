@@ -1,15 +1,16 @@
 SHELL := /bin/bash
 
-.PHONY: help format lint test check build macos-artifact remindctl release-check docs-site clean
+.PHONY: help format lint test check build macos-artifact release-harness remindctl release-check docs-site clean
 
 help:
 	@printf "%s\n" \
 		"make format    - swift format in-place" \
-		"make lint      - swift format lint + strict swiftlint" \
+		"make lint      - Swift, shell, and workflow lint" \
 		"make test      - sync version + swift test (coverage enabled)" \
 		"make check     - lint + test + coverage gate" \
 		"make build     - release build into bin/ (codesigned)" \
-		"make macos-artifact - build universal dist/remindctl-macos.zip" \
+		"make macos-artifact - build credential-free universal local candidate" \
+		"make release-harness - test release scripts with credential-free mocks" \
 		"make release-check TAG=vX.Y.Z - validate release preflight" \
 		"make remindctl - clean rebuild + run debug binary (ARGS=...)" \
 		"make docs-site - build GitHub Pages docs into dist/docs-site" \
@@ -21,6 +22,8 @@ format:
 lint:
 	swift format lint --recursive Sources Tests
 	swiftlint --strict
+	shellcheck -x scripts/*.sh
+	actionlint .github/workflows/*.yml
 
 test:
 	scripts/generate-version.sh
@@ -39,7 +42,10 @@ build:
 	codesign --force --sign - --identifier com.steipete.remindctl bin/remindctl
 
 macos-artifact:
-	scripts/package-macos-release.sh
+	scripts/package-macos-candidate.sh
+
+release-harness:
+	scripts/test-release.sh
 
 release-check:
 	@if [ -z "$(TAG)" ]; then echo "Usage: make release-check TAG=vX.Y.Z" >&2; exit 1; fi

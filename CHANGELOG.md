@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.3.3 - Unreleased
+## 0.3.3 - 2026-07-09
+- Keep every alarm unchanged for due-only edits, and preserve relative and location alarms when `edit --alarm` or `edit --clear-alarm` replaces or clears absolute alarms.
+- Ship official macOS archives as universal hardened-runtime binaries signed by OpenClaw Foundation, notarized locally, verified with the standalone-binary notarization constraint, and Gatekeeper-tested through naturally quarantined clean-VM execution before publication.
+- Bind release assets to the live protected commit and exact verified signed tag, require native Apple Silicon and Intel verification, and fail closed across draft publication and Homebrew handoff.
 
 ## 0.3.2 - 2026-07-01
 - Make `--url` visible in Reminders.app by retaining the EventKit URL and mirroring one managed notes link; `--clear-url` removes only that link; thanks @TurboTheTurtle.

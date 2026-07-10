@@ -5,3 +5,5 @@ Packages
 DerivedData
 bin
 dist
+node_modules/
+.mac-release.env

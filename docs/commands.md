@@ -69,6 +69,8 @@ remindctl edit 4A83 --no-repeat
 
 `edit`, `complete`, and `delete` accept indexes from the current default listing or ID prefixes.
 
+Changing or clearing only the due date leaves every alarm unchanged. Explicit alarm edits preserve relative and location-based alarms while replacing or clearing absolute alarms.
+
 ## Lists
 
 ```bash
