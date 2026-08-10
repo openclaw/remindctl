@@ -240,12 +240,13 @@ extension RemindersStore {
       let listName: String
     }
 
+    let context = EventKitFetchContext(eventStore: eventStore, calendars: calendars)
     let reminderData: [ReminderData] = try await AsyncTimeout.withTimeout(
       after: Self.externalOperationTimeout,
       timeoutError: .operationFailed("Timed out waiting for EventKit reminders after 30 seconds")
     ) { completion in
-      let predicate = eventStore.predicateForReminders(in: calendars)
-      let identifier = eventStore.fetchReminders(matching: predicate) { reminders in
+      let predicate = context.eventStore.predicateForReminders(in: context.calendars)
+      let identifier = context.eventStore.fetchReminders(matching: predicate) { reminders in
         guard let claim = completion.claim() else { return }
         let data = (reminders ?? []).map { reminder in
           let components = reminder.dueDateComponents
@@ -270,7 +271,7 @@ extension RemindersStore {
         }
         claim.resume(returning: data)
       }
-      let request = EventKitFetchCancellation(eventStore: eventStore, identifier: identifier)
+      let request = EventKitFetchCancellation(eventStore: context.eventStore, identifier: identifier)
       return { request.cancel() }
     }
 

@@ -48,10 +48,10 @@ enum AsyncTimeout {
     }
   }
 
-  nonisolated(nonsending) static func withTimeout<Value: Sendable>(
+  static func withTimeout<Value: Sendable>(
     after duration: Duration,
     timeoutError: RemindCoreError,
-    start: (Completion<Value>) -> Cancellation?
+    start: @Sendable (Completion<Value>) -> Cancellation?
   ) async throws -> Value {
     let state = AsyncTimeoutState<Value>()
 

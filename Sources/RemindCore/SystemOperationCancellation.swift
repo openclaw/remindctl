@@ -2,6 +2,16 @@ import CoreLocation
 import EventKit
 import Foundation
 
+final class EventKitFetchContext: @unchecked Sendable {
+  let eventStore: EKEventStore
+  let calendars: [EKCalendar]
+
+  init(eventStore: EKEventStore, calendars: [EKCalendar]) {
+    self.eventStore = eventStore
+    self.calendars = calendars
+  }
+}
+
 final class EventKitFetchCancellation: @unchecked Sendable {
   private let eventStore: EKEventStore
   private let identifier: Any
