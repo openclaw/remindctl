@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Bound EventKit reminder fetches and Core Location geocoding to 30 seconds so stalled system callbacks fail instead of hanging the CLI; thanks @SebTardif and @vincentkoc.
+
 ## 0.3.3 - 2026-07-09
 - Keep every alarm unchanged for due-only edits, and preserve relative and location alarms when `edit --alarm` or `edit --clear-alarm` replaces or clears absolute alarms.
 - Ship official macOS archives as universal hardened-runtime binaries signed by OpenClaw Foundation, notarized locally, verified with the standalone-binary notarization constraint, and Gatekeeper-tested through naturally quarantined clean-VM execution before publication.

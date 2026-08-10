@@ -1,8 +1,9 @@
-import CoreLocation
 import EventKit
 import Foundation
 
 public actor RemindersStore {
+  static let externalOperationTimeout: Duration = .seconds(30)
+
   private let eventStore = EKEventStore()
   private let calendar: Calendar
 
@@ -72,7 +73,7 @@ public actor RemindersStore {
   }
 
   public func reminders(matching target: ReminderListTarget?) async throws -> [ReminderItem] {
-    await fetchReminders(in: try calendars(matching: target))
+    try await fetchReminders(in: try calendars(matching: target))
   }
 
   public func createList(name: String) async throws -> ReminderList {
@@ -219,7 +220,7 @@ extension RemindersStore {
     }
   }
 
-  private func fetchReminders(in calendars: [EKCalendar]) async -> [ReminderItem] {
+  private func fetchReminders(in calendars: [EKCalendar]) async throws -> [ReminderItem] {
     struct ReminderData: Sendable {
       let id: String
       let title: String
@@ -239,9 +240,13 @@ extension RemindersStore {
       let listName: String
     }
 
-    let reminderData = await withCheckedContinuation { (continuation: CheckedContinuation<[ReminderData], Never>) in
+    let reminderData: [ReminderData] = try await AsyncTimeout.withTimeout(
+      after: Self.externalOperationTimeout,
+      timeoutError: .operationFailed("Timed out waiting for EventKit reminders after 30 seconds")
+    ) { completion in
       let predicate = eventStore.predicateForReminders(in: calendars)
-      eventStore.fetchReminders(matching: predicate) { reminders in
+      let identifier = eventStore.fetchReminders(matching: predicate) { reminders in
+        guard let claim = completion.claim() else { return }
         let data = (reminders ?? []).map { reminder in
           let components = reminder.dueDateComponents
           return ReminderData(
@@ -263,8 +268,10 @@ extension RemindersStore {
             listName: reminder.calendar.title
           )
         }
-        continuation.resume(returning: data)
+        claim.resume(returning: data)
       }
+      let request = EventKitFetchCancellation(eventStore: eventStore, identifier: identifier)
+      return { request.cancel() }
     }
 
     return reminderData.map { data in
@@ -400,43 +407,6 @@ extension RemindersStore {
     return RecurrenceRule(frequency: frequency, interval: rule.interval)
   }
 
-  private func locationAlarm(from trigger: LocationTrigger) async throws -> EKAlarm {
-    let structuredLocation = EKStructuredLocation(title: trigger.address)
-    let location: CLLocation
-    if let latitude = trigger.latitude, let longitude = trigger.longitude {
-      location = CLLocation(latitude: latitude, longitude: longitude)
-    } else {
-      let placemarks = try await CLGeocoder().geocodeAddressString(trigger.address)
-      guard let geocodedLocation = placemarks.first?.location else {
-        throw RemindCoreError.operationFailed("Could not geocode location: \(trigger.address)")
-      }
-      location = geocodedLocation
-    }
-
-    structuredLocation.geoLocation = location
-    structuredLocation.radius = trigger.radius
-
-    let alarm = EKAlarm()
-    alarm.structuredLocation = structuredLocation
-    alarm.proximity = trigger.proximity == .arriving ? .enter : .leave
-    return alarm
-  }
-
-  private static func locationTrigger(from reminder: EKReminder) -> LocationTrigger? {
-    guard let alarm = reminder.alarms?.first(where: { $0.structuredLocation != nil }),
-      let structuredLocation = alarm.structuredLocation,
-      let proximity = LocationProximity(eventKitProximity: alarm.proximity)
-    else { return nil }
-
-    let coordinate = structuredLocation.geoLocation?.coordinate
-    return LocationTrigger(
-      address: structuredLocation.title ?? "",
-      latitude: coordinate?.latitude,
-      longitude: coordinate?.longitude,
-      radius: structuredLocation.radius,
-      proximity: proximity
-    )
-  }
 }
 
 extension RecurrenceFrequency {
@@ -472,18 +442,5 @@ extension RecurrenceFrequency {
 extension RecurrenceRule {
   fileprivate var eventKitFrequency: EKRecurrenceFrequency {
     frequency.eventKitFrequency
-  }
-}
-
-extension LocationProximity {
-  fileprivate init?(eventKitProximity: EKAlarmProximity) {
-    switch eventKitProximity {
-    case .enter:
-      self = .arriving
-    case .leave:
-      self = .leaving
-    default:
-      return nil
-    }
   }
 }

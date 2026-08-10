@@ -10,7 +10,7 @@ mkdir -p "${CACHE_PATH}"
 
 MIN_COVERAGE="${COVERAGE_MIN:-90}"
 INCLUDE_REGEX="${COVERAGE_INCLUDE_REGEX:-/Sources/RemindCore/}"
-EXCLUDE_REGEX="${COVERAGE_EXCLUDE_REGEX:-/Sources/RemindCore/EventKitStore.swift}"
+EXCLUDE_REGEX="${COVERAGE_EXCLUDE_REGEX:-/Sources/RemindCore/(EventKitStore|EventKitLocation|SystemOperationCancellation)\\.swift}"
 
 echo "==> swift test --enable-code-coverage (isolated build dir)"
 swift test --enable-code-coverage --build-path "${COVERAGE_BUILD_PATH}" --cache-path "${CACHE_PATH}" >/dev/null
