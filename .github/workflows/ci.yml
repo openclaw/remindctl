@@ -9,6 +9,16 @@ permissions:
   contents: read
 
 jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "26"
+      - name: Build docs site
+        run: make docs-site
+
   build:
     runs-on: macos-15
     steps:

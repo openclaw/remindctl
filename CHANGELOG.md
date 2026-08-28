@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Update the docs workflow to Node.js 26 and `actions/setup-node@v7`, and verify the docs build in pull-request CI.
 - Bound `doctor` rich-read sqlite3 probes to 30 seconds so a stuck local database query fails with a timeout instead of hanging the CLI. Thanks @SebTardif.
 
 ## 0.3.4 - 2026-08-09
