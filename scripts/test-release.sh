@@ -470,6 +470,34 @@ expect_failure "malformed release inventory" env \
 echo "==> downloader rejects malformed and partial inventories atomically"
 mock_api_assets="$work/mock-api-assets"
 mock_release_notes="$work/mock-release-notes.md"
+notes_fixture="$work/notes-fixture"
+mkdir -p "$notes_fixture/scripts"
+cp "$ROOT/scripts/extract-release-notes.sh" "$ROOT/scripts/download-release-assets.sh" \
+  "$ROOT/scripts/release-config.sh" "$notes_fixture/scripts/"
+download_script="$notes_fixture/scripts/download-release-assets.sh"
+printf '# Changelog\n\n## Unreleased\n\n- Pending changes.\n' >"$notes_fixture/CHANGELOG.md"
+expect_failure "unfinalized release notes" \
+  "$notes_fixture/scripts/extract-release-notes.sh" "$MARKETING_VERSION" "$mock_release_notes"
+expect_failure "unfinalized release download" env \
+  GH_BIN="$work/bin/mock-gh" GH_LOG="$work/unfinalized-gh.log" \
+  "$download_script" "$TAG" draft "$work/download-unfinalized"
+[[ ! -e "$work/unfinalized-gh.log" ]] || fail "unfinalized notes contacted GitHub"
+[[ ! -e "$work/download-unfinalized" ]] || fail "unfinalized notes left output behind"
+cat >"$notes_fixture/CHANGELOG.md" <<EOF
+# Changelog
+
+## Unreleased
+
+- Pending changes.
+
+## $MARKETING_VERSION - 2000-01-01
+
+- Synthetic release notes.
+
+## 0.0.0 - 1999-01-01
+
+- Older changes.
+EOF
 mkdir -p "$mock_api_assets"
 printf 'artifact\n' >"$mock_api_assets/$RELEASE_ARTIFACT"
 printf 'checksum\n' >"$mock_api_assets/$RELEASE_CHECKSUMS"
@@ -481,13 +509,15 @@ path, source_commit, tag_object = sys.argv[1:]
 with open(path, "w", encoding="utf-8") as handle:
     json.dump({"sourceCommit": source_commit, "tagObject": tag_object}, handle)
 PY
-"$ROOT/scripts/extract-release-notes.sh" "$MARKETING_VERSION" "$mock_release_notes"
+"$notes_fixture/scripts/extract-release-notes.sh" "$MARKETING_VERSION" "$mock_release_notes"
+printf '\n- Synthetic release notes.\n\n' >"$work/expected-notes.md"
+cmp -s "$mock_release_notes" "$work/expected-notes.md" || fail "release notes included another section"
 env \
   "$draft_token_name=placeholder" GH_BIN="$work/bin/mock-gh" \
   MOCK_TAG="$TAG" MOCK_VERSION="$MARKETING_VERSION" \
   MOCK_RELEASE_BODY_FILE="$mock_release_notes" MOCK_ASSET_DIR="$mock_api_assets" \
   MOCK_SOURCE_COMMIT="$source_commit" MOCK_TAG_OBJECT="$tag_object" \
-  "$ROOT/scripts/download-release-assets.sh" "$TAG" draft "$work/download-valid" >/dev/null
+  "$download_script" "$TAG" draft "$work/download-valid" >/dev/null
 [[ -f "$work/download-valid/source-proof.json" ]] || fail "valid download omitted source proof"
 [[ -d "$work/download-valid/assets" ]] || fail "valid download omitted asset directory"
 metadata_id="$(env \
@@ -502,7 +532,7 @@ for metadata_mode in wrong-title wrong-body wrong-target; do
     MOCK_TAG="$TAG" MOCK_VERSION="$MARKETING_VERSION" \
     MOCK_RELEASE_BODY_FILE="$mock_release_notes" MOCK_ASSET_DIR="$mock_api_assets" \
     MOCK_SOURCE_COMMIT="$source_commit" MOCK_TAG_OBJECT="$tag_object" \
-    "$ROOT/scripts/download-release-assets.sh" "$TAG" draft "$work/download-$metadata_mode"
+    "$download_script" "$TAG" draft "$work/download-$metadata_mode"
   [[ ! -e "$work/download-$metadata_mode" ]] || fail "$metadata_mode left output behind"
 done
 expect_failure "malformed API inventory" env \
@@ -510,35 +540,35 @@ expect_failure "malformed API inventory" env \
   MOCK_TAG="$TAG" MOCK_VERSION="$MARKETING_VERSION" \
   MOCK_RELEASE_BODY_FILE="$mock_release_notes" MOCK_ASSET_DIR="$mock_api_assets" \
   MOCK_SOURCE_COMMIT="$source_commit" MOCK_TAG_OBJECT="$tag_object" \
-  "$ROOT/scripts/download-release-assets.sh" "$TAG" draft "$work/download-malformed"
+  "$download_script" "$TAG" draft "$work/download-malformed"
 [[ ! -e "$work/download-malformed" ]] || fail "malformed download left output behind"
 expect_failure "partial API download" env \
   "$draft_token_name=placeholder" GH_MODE=partial GH_BIN="$work/bin/mock-gh" \
   MOCK_TAG="$TAG" MOCK_VERSION="$MARKETING_VERSION" \
   MOCK_RELEASE_BODY_FILE="$mock_release_notes" MOCK_ASSET_DIR="$mock_api_assets" \
   MOCK_SOURCE_COMMIT="$source_commit" MOCK_TAG_OBJECT="$tag_object" \
-  "$ROOT/scripts/download-release-assets.sh" "$TAG" draft "$work/download-partial"
+  "$download_script" "$TAG" draft "$work/download-partial"
 [[ ! -e "$work/download-partial" ]] || fail "partial download left output behind"
 expect_failure "wrong live default ref" env \
   "$draft_token_name=placeholder" GH_MODE=wrong-default GH_BIN="$work/bin/mock-gh" \
   MOCK_TAG="$TAG" MOCK_VERSION="$MARKETING_VERSION" \
   MOCK_RELEASE_BODY_FILE="$mock_release_notes" MOCK_ASSET_DIR="$mock_api_assets" \
   MOCK_SOURCE_COMMIT="$source_commit" MOCK_TAG_OBJECT="$tag_object" \
-  "$ROOT/scripts/download-release-assets.sh" "$TAG" draft "$work/download-wrong-default"
+  "$download_script" "$TAG" draft "$work/download-wrong-default"
 [[ ! -e "$work/download-wrong-default" ]] || fail "wrong default ref left output behind"
 expect_failure "wrong remote tag object" env \
   "$draft_token_name=placeholder" GH_MODE=wrong-tag GH_BIN="$work/bin/mock-gh" \
   MOCK_TAG="$TAG" MOCK_VERSION="$MARKETING_VERSION" \
   MOCK_RELEASE_BODY_FILE="$mock_release_notes" MOCK_ASSET_DIR="$mock_api_assets" \
   MOCK_SOURCE_COMMIT="$source_commit" MOCK_TAG_OBJECT="$tag_object" \
-  "$ROOT/scripts/download-release-assets.sh" "$TAG" draft "$work/download-wrong-tag"
+  "$download_script" "$TAG" draft "$work/download-wrong-tag"
 [[ ! -e "$work/download-wrong-tag" ]] || fail "wrong tag ref left output behind"
 expect_failure "unverified signed tag" env \
   "$draft_token_name=placeholder" GH_MODE=invalid-signature GH_BIN="$work/bin/mock-gh" \
   MOCK_TAG="$TAG" MOCK_VERSION="$MARKETING_VERSION" \
   MOCK_RELEASE_BODY_FILE="$mock_release_notes" MOCK_ASSET_DIR="$mock_api_assets" \
   MOCK_SOURCE_COMMIT="$source_commit" MOCK_TAG_OBJECT="$tag_object" \
-  "$ROOT/scripts/download-release-assets.sh" "$TAG" draft "$work/download-invalid-signature"
+  "$download_script" "$TAG" draft "$work/download-invalid-signature"
 [[ ! -e "$work/download-invalid-signature" ]] || fail "unverified tag left output behind"
 
 echo "==> published verifier requires both native architecture jobs"

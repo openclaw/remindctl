@@ -36,6 +36,8 @@ On macOS 26.5, `spctl --assess --type execute` rejects known Apple-notarized sta
 
 Local linting requires SwiftLint, ShellCheck, and actionlint.
 
+`make release-harness` uses isolated changelog fixtures and can run while notes are still `Unreleased`. The release preflight and real release downloads continue to require finalized notes for the requested version.
+
 ## Gate 1: protected source and signed tag
 
 After the release commit is on protected `main`, exact-head CI is green, and the tag/public mutation gate is granted:
