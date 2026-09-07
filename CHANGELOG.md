@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+**Highlights:** Clearer alarm guidance and a repaired Homebrew release handoff.
+
+- Clarify in `add`/`edit` help and command docs that `--alarm` schedules a notification without enabling Apple's native Urgent toggle; use Reminders.app to enable Urgent. Thanks @Amitdvl.
+- Unblock Homebrew updates by accepting GitHub's bare release-verifier workflow path while retaining exact branch, source commit, freshness, and native-architecture checks.
+
 ## 0.3.5 - 2026-09-05
 
 **Highlights:** Repeated list creation now preserves existing lists, reminder reads and writes handle missing calendars, and week views respect calendar boundaries.
