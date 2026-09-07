@@ -7,7 +7,11 @@ enum EditCommand {
     CommandSpec(
       name: "edit",
       abstract: "Edit a reminder",
-      discussion: "Use an index or ID prefix from the show output.",
+      discussion: """
+        Use an index or ID prefix from the show output.
+        --alarm schedules a notification; it does not enable the native Urgent toggle in Reminders.app.
+        EventKit does not expose Urgent. To enable it, use Reminders.app.
+        """,
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
@@ -20,7 +24,9 @@ enum EditCommand {
               label: "listID", names: [.long("list-id")], help: "Move to list by ID or ID prefix", parsing: .singleValue
             ),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Set due date", parsing: .singleValue),
-            .make(label: "alarm", names: [.short("a"), .long("alarm")], help: "Set alarm date", parsing: .singleValue),
+            .make(
+              label: "alarm", names: [.short("a"), .long("alarm")], help: "Set notification date", parsing: .singleValue
+            ),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Set notes", parsing: .singleValue),
             .make(
               label: "url",

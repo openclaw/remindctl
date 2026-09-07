@@ -7,7 +7,11 @@ enum AddCommand {
     CommandSpec(
       name: "add",
       abstract: "Add a reminder",
-      discussion: "Provide a title as an argument or via --title.",
+      discussion: """
+        Provide a title as an argument or via --title.
+        --alarm schedules a notification; it does not enable the native Urgent toggle in Reminders.app.
+        EventKit does not expose Urgent. To enable it, use Reminders.app.
+        """,
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
@@ -18,7 +22,9 @@ enum AddCommand {
             .make(label: "list", names: [.short("l"), .long("list")], help: "List name", parsing: .singleValue),
             .make(label: "listID", names: [.long("list-id")], help: "List ID or ID prefix", parsing: .singleValue),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Due date", parsing: .singleValue),
-            .make(label: "alarm", names: [.short("a"), .long("alarm")], help: "Alarm date", parsing: .singleValue),
+            .make(
+              label: "alarm", names: [.short("a"), .long("alarm")], help: "Notification date", parsing: .singleValue
+            ),
             .make(
               label: "location",
               names: [.long("location")],
