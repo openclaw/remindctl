@@ -209,12 +209,18 @@ PY
   exit 0
 fi
 if [[ "$*" == *"actions/workflows/release.yml/runs"* ]]; then
-  workflow_path=".github/workflows/release.yml@main"
-  if [[ "${GH_MODE:-valid}" == "bare-workflow-path" ]]; then
-    workflow_path=".github/workflows/release.yml"
-  fi
-  printf '[{"workflow_runs":[{"id":456,"event":"workflow_dispatch","head_branch":"main","head_sha":"%s","path":"%s","display_title":"verify published %s","status":"completed","conclusion":"success","run_started_at":"2026-07-09T12:01:00Z","html_url":"https://example.invalid/run/456"}]}]\n' \
-    "${MOCK_SOURCE_COMMIT:?}" "$workflow_path" "${MOCK_TAG:-v0.3.3}"
+  workflow_path=".github/workflows/release.yml"
+  workflow_branch="main"
+  workflow_commit="${MOCK_SOURCE_COMMIT:?}"
+  case "${GH_MODE:-valid}" in
+    qualified-workflow-path) workflow_path=".github/workflows/release.yml@main" ;;
+    wrong-workflow-path) workflow_path=".github/workflows/other.yml" ;;
+    wrong-workflow-qualifier) workflow_path=".github/workflows/release.yml@feature" ;;
+    wrong-workflow-branch) workflow_branch="feature" ;;
+    wrong-workflow-commit) workflow_commit="ffffffffffffffffffffffffffffffffffffffff" ;;
+  esac
+  printf '[{"workflow_runs":[{"id":456,"event":"workflow_dispatch","head_branch":"%s","head_sha":"%s","path":"%s","display_title":"verify published %s","status":"completed","conclusion":"success","run_started_at":"2026-07-09T12:01:00Z","html_url":"https://example.invalid/run/456"}]}]\n' \
+    "$workflow_branch" "$workflow_commit" "$workflow_path" "${MOCK_TAG:-v0.3.3}"
   exit 0
 fi
 if [[ "$*" == *"actions/runs/456/jobs"* ]]; then
@@ -584,12 +590,20 @@ expect_failure "missing native Intel verifier" env \
   MOCK_RELEASE_BODY_FILE="$mock_release_notes" MOCK_ASSET_DIR="$mock_api_assets" \
   MOCK_SOURCE_COMMIT="$source_commit" MOCK_TAG_OBJECT="$tag_object" \
   "$ROOT/scripts/require-published-verifier.sh" "$TAG"
-expect_failure "unqualified published verifier workflow path" env \
-  GH_BIN="$work/bin/mock-gh" GH_MODE=bare-workflow-path MOCK_RELEASE_STATE=published \
+env \
+  GH_BIN="$work/bin/mock-gh" GH_MODE=qualified-workflow-path MOCK_RELEASE_STATE=published \
   MOCK_TAG="$TAG" MOCK_VERSION="$MARKETING_VERSION" \
   MOCK_RELEASE_BODY_FILE="$mock_release_notes" MOCK_ASSET_DIR="$mock_api_assets" \
   MOCK_SOURCE_COMMIT="$source_commit" MOCK_TAG_OBJECT="$tag_object" \
-  "$ROOT/scripts/require-published-verifier.sh" "$TAG"
+  "$ROOT/scripts/require-published-verifier.sh" "$TAG" >/dev/null
+for invalid_mode in wrong-workflow-path wrong-workflow-qualifier wrong-workflow-branch wrong-workflow-commit; do
+  expect_failure "$invalid_mode published verifier" env \
+    GH_BIN="$work/bin/mock-gh" GH_MODE="$invalid_mode" MOCK_RELEASE_STATE=published \
+    MOCK_TAG="$TAG" MOCK_VERSION="$MARKETING_VERSION" \
+    MOCK_RELEASE_BODY_FILE="$mock_release_notes" MOCK_ASSET_DIR="$mock_api_assets" \
+    MOCK_SOURCE_COMMIT="$source_commit" MOCK_TAG_OBJECT="$tag_object" \
+    "$ROOT/scripts/require-published-verifier.sh" "$TAG"
+done
 expect_failure "stale published verifier after asset replacement" env \
   GH_BIN="$work/bin/mock-gh" GH_MODE=stale-assets MOCK_RELEASE_STATE=published \
   MOCK_TAG="$TAG" MOCK_VERSION="$MARKETING_VERSION" \

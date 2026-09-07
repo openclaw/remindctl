@@ -106,6 +106,8 @@ scripts/update-homebrew.sh vX.Y.Z
 
 That helper redownloads and re-verifies the published release, requires the exact successful published verifier and both native jobs, and rejects any verifier run that did not begin strictly later than the current release and every current asset's last update. Immediately before its sole tap mutation, it repeats those checks and byte-compares every proof and asset. It renders `Formula/remindctl.rb` from the current tap blob using the locally verified archive SHA-256, updates that exact blob atomically, updates Homebrew, checks the canonical formula homepage/URL/version/checksum, installs or upgrades, runs `brew test`, and repeats the exact signed-binary verification against the installed binary.
 
+The published verifier accepts GitHub's bare `.github/workflows/release.yml` run path or the same path qualified with `@main`. It independently requires `head_branch` to be `main` and `head_sha` to equal the release's exact source commit; a path alone is never branch or source proof.
+
 ## Closeout
 
 - Confirm GitHub Release notes match the finalized changelog section and exactly three assets exist.
