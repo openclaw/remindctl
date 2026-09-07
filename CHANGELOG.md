@@ -1,5 +1,7 @@
 # Changelog
 
+## Unreleased
+
 ## 0.3.5 - 2026-09-05
 
 **Highlights:** Repeated list creation now preserves existing lists, reminder reads and writes handle missing calendars, and week views respect calendar boundaries.
