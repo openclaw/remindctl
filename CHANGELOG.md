@@ -1,5 +1,7 @@
 # Changelog
 
+## Unreleased
+
 ## 0.3.6 - 2026-09-07
 
 **Highlights:** Clearer alarm guidance and a repaired Homebrew release handoff.
