@@ -90,7 +90,12 @@ for page in run_pages:
     else:
         raise SystemExit("malformed workflow-run response")
 candidates = []
-expected_workflow_path = f".github/workflows/release.yml@{default_branch}"
+# REST workflow runs use a bare path; also accept the default-branch-qualified
+# form. The branch and exact source commit are checked independently below.
+expected_workflow_paths = {
+    ".github/workflows/release.yml",
+    f".github/workflows/release.yml@{default_branch}",
+}
 for run in runs:
     started_raw = run.get("run_started_at")
     if not isinstance(started_raw, str):
@@ -100,7 +105,7 @@ for run in runs:
         run.get("event") == "workflow_dispatch"
         and run.get("head_sha") == source_commit
         and run.get("head_branch") == default_branch
-        and run.get("path") == expected_workflow_path
+        and run.get("path") in expected_workflow_paths
         and run.get("display_title") == f"verify published {tag}"
         and run.get("status") == "completed"
         and run.get("conclusion") == "success"
