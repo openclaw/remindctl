@@ -58,6 +58,8 @@ Useful `add` options:
 - `--leaving` changes a location trigger to leaving.
 - `--radius <meters>` adjusts the geofence radius.
 
+`--alarm` schedules a notification; it does not enable the native **Urgent** toggle in Reminders.app. EventKit does not expose Urgent, so `remindctl` cannot set it. Use `--alarm` for a notification, or enable Urgent directly in Reminders.app.
+
 ## Edit reminders
 
 ```bash
@@ -74,6 +76,7 @@ remindctl edit 4A83 --no-repeat
 If `add`, `edit`, or `complete` reports `Reminder is missing a calendar`, EventKit saved the reminder but returned it without its list. Check Reminders.app before retrying; this error does not roll back the saved change.
 
 Changing or clearing only the due date leaves every alarm unchanged. Explicit alarm edits preserve relative and location-based alarms while replacing or clearing absolute alarms.
+As with `add`, `edit --alarm` schedules a notification without enabling native Urgent. Set Urgent in Reminders.app.
 
 ## Lists
 
