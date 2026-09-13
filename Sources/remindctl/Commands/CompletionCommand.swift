@@ -32,10 +32,9 @@ enum CompletionCommand {
     }
   }
 
-  private static let commands = [
-    "show", "list", "search", "info", "add", "edit", "complete", "delete", "status", "authorize", "doctor", "export",
-    "link", "open", "completion",
-  ]
+  private static var commands: [String] {
+    CommandRouter.commandSpecs.map(\.name)
+  }
 
   private static func zsh() -> String {
     """

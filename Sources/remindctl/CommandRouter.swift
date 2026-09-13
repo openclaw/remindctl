@@ -8,25 +8,27 @@ struct CommandRouter {
   let specs: [CommandSpec]
   let program: Program
 
+  static let commandSpecs: [CommandSpec] = [
+    ShowCommand.spec,
+    ListCommand.spec,
+    SearchCommand.spec,
+    InfoCommand.spec,
+    AddCommand.spec,
+    EditCommand.spec,
+    CompleteCommand.spec,
+    DeleteCommand.spec,
+    StatusCommand.spec,
+    AuthorizeCommand.spec,
+    DoctorCommand.spec,
+    ExportCommand.spec,
+    LinkCommand.spec,
+    OpenCommand.spec,
+    CompletionCommand.spec,
+  ]
+
   init() {
     self.version = CommandRouter.resolveVersion()
-    self.specs = [
-      ShowCommand.spec,
-      ListCommand.spec,
-      SearchCommand.spec,
-      InfoCommand.spec,
-      AddCommand.spec,
-      EditCommand.spec,
-      CompleteCommand.spec,
-      DeleteCommand.spec,
-      StatusCommand.spec,
-      AuthorizeCommand.spec,
-      DoctorCommand.spec,
-      ExportCommand.spec,
-      LinkCommand.spec,
-      OpenCommand.spec,
-      CompletionCommand.spec,
-    ]
+    self.specs = Self.commandSpecs
     let descriptor = CommandDescriptor(
       name: rootName,
       abstract: "Manage Apple Reminders from the terminal",

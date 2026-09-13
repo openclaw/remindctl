@@ -73,17 +73,6 @@ enum CommandHelpers {
     return nil
   }
 
-  static func requiredListTarget(
-    name: String?,
-    id: String?,
-    argumentName: String = "list"
-  ) throws -> ReminderListTarget {
-    guard let target = try listTarget(name: name, id: id) else {
-      throw ParsedValuesError.missingArgument(argumentName)
-    }
-    return target
-  }
-
   static func reminder(_ reminder: ReminderItem, matchesSearch query: String) -> Bool {
     let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return false }

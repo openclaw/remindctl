@@ -145,13 +145,12 @@ enum AddCommand {
     radius: String?,
     leaving: Bool
   ) throws -> LocationTrigger? {
-    if location == nil {
+    guard let location else {
       if radius != nil || leaving {
         throw RemindCoreError.operationFailed("Use --location with --radius or --leaving")
       }
       return nil
     }
-    guard let location else { return nil }
     let radius = try radius.map(parseRadius) ?? 100
     return LocationTrigger(
       address: location,

@@ -56,16 +56,8 @@ enum OpenCommand {
       }
 
       let url: URL
-      if values.flag("app") {
-        if values.argument(0) != nil || listTarget != nil {
-          let result = try await LinkCommand.resolve(values: values)
-          guard let parsed = URL(string: result.url) else {
-            throw RemindCoreError.operationFailed("Invalid Reminders URL")
-          }
-          url = parsed
-        } else {
-          url = URL(string: "x-apple-reminderkit://")!
-        }
+      if values.flag("app"), values.argument(0) == nil, listTarget == nil {
+        url = URL(string: "x-apple-reminderkit://")!
       } else {
         let result = try await LinkCommand.resolve(values: values)
         guard let parsed = URL(string: result.url) else {
