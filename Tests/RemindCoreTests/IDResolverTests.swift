@@ -45,6 +45,14 @@ struct IDResolverTests {
     #expect(resolved.first?.title == "Second")
   }
 
+  @Test("Reject out-of-range indexes without overflow", arguments: [Int.min, -1, 0, 3, Int.max])
+  func rejectInvalidIndex(_ index: Int) {
+    let input = String(index)
+    #expect(throws: RemindCoreError.invalidIdentifier(input)) {
+      _ = try IDResolver.resolve([input], from: sampleReminders())
+    }
+  }
+
   @Test("Resolve by prefix")
   func resolvePrefix() throws {
     let resolved = try IDResolver.resolve(["abcd"], from: sampleReminders())

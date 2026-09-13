@@ -38,6 +38,26 @@ struct DateParsingTests {
     #expect(parsed?.isDateOnly == false)
   }
 
+  @Test("Local dates honor the supplied time zone", arguments: [14 * 3600, -10 * 3600])
+  func suppliedTimeZone(_ offset: Int) throws {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = try #require(TimeZone(secondsFromGMT: offset))
+    let expected = try #require(
+      calendar.date(from: DateComponents(year: 2026, month: 1, day: 3, hour: 12, minute: 34)))
+
+    for input in ["2026-01-03T12:34", "2026-01-03 12:34", "01/03/2026 12:34"] {
+      let parsed = try #require(DateParsing.parseUserDateWithMetadata(input, calendar: calendar))
+      #expect(parsed.date == expected)
+      #expect(!parsed.isDateOnly)
+    }
+    let allDay = try #require(DateParsing.parseUserDateWithMetadata("2026-01-03", calendar: calendar))
+    #expect(allDay.date == calendar.startOfDay(for: expected))
+    #expect(allDay.isDateOnly)
+
+    let absolute = "2026-01-03T12:34:00Z"
+    #expect(DateParsing.parseUserDate(absolute, calendar: calendar) == ISO8601DateFormatter().date(from: absolute))
+  }
+
   @Test("Formatted date parsing")
   func formattedParsing() {
     let input = "2026-01-03 10:30"

@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Run developer checks once with the existing 90% coverage gate, pin CI to Swift 6.2 and current Node/pnpm tooling, and execute universal CLI smoke checks in CI.
+- Reject out-of-range numeric reminder indexes before converting them to array offsets, preventing an arithmetic-overflow crash for the minimum integer.
+- Honor the supplied calendar's time zone when RemindCore parses local dates, while retaining explicit ISO 8601 offsets.
 
 ## 0.3.6 - 2026-09-07
 

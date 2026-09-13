@@ -19,6 +19,7 @@ public enum DateParsing {
     parseUserDateWithMetadata(input, now: now, calendar: calendar)?.date
   }
 
+  /// Interprets local dates in the supplied calendar's time zone; explicit ISO offsets take precedence.
   public static func parseUserDateWithMetadata(
     _ input: String,
     now: Date = Date(),
@@ -39,15 +40,15 @@ public enum DateParsing {
     }
 
     let localISO =
-      localISOFormatter(format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS").date(from: trimmed)
-      ?? localISOFormatter(format: "yyyy-MM-dd'T'HH:mm:ss.SSS").date(from: trimmed)
-      ?? localISOFormatter(format: "yyyy-MM-dd'T'HH:mm:ss").date(from: trimmed)
-      ?? localISOFormatter(format: "yyyy-MM-dd'T'HH:mm").date(from: trimmed)
+      localFormatter(format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS", calendar: calendar).date(from: trimmed)
+      ?? localFormatter(format: "yyyy-MM-dd'T'HH:mm:ss.SSS", calendar: calendar).date(from: trimmed)
+      ?? localFormatter(format: "yyyy-MM-dd'T'HH:mm:ss", calendar: calendar).date(from: trimmed)
+      ?? localFormatter(format: "yyyy-MM-dd'T'HH:mm", calendar: calendar).date(from: trimmed)
     if let localISO {
       return ParsedUserDate(date: localISO, isDateOnly: false)
     }
 
-    for (formatter, isDateOnly) in dateFormatters() {
+    for (formatter, isDateOnly) in dateFormatters(calendar: calendar) {
       if let date = formatter.date(from: trimmed) {
         return ParsedUserDate(date: date, isDateOnly: isDateOnly)
       }
@@ -91,15 +92,15 @@ public enum DateParsing {
     return formatter
   }
 
-  private static func localISOFormatter(format: String) -> DateFormatter {
+  private static func localFormatter(format: String, calendar: Calendar) -> DateFormatter {
     let formatter = DateFormatter()
     formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = TimeZone.current
+    formatter.timeZone = calendar.timeZone
     formatter.dateFormat = format
     return formatter
   }
 
-  private static func dateFormatters() -> [(DateFormatter, Bool)] {
+  private static func dateFormatters(calendar: Calendar) -> [(DateFormatter, Bool)] {
     let formats: [(String, Bool)] = [
       ("yyyy-MM-dd", true),
       ("yyyy-MM-dd HH:mm", false),
@@ -110,11 +111,7 @@ public enum DateParsing {
       ("dd-MM-yyyy", true),
     ]
     return formats.map { format, isDateOnly in
-      let formatter = DateFormatter()
-      formatter.locale = Locale(identifier: "en_US_POSIX")
-      formatter.timeZone = TimeZone.current
-      formatter.dateFormat = format
-      return (formatter, isDateOnly)
+      (localFormatter(format: format, calendar: calendar), isDateOnly)
     }
   }
 }

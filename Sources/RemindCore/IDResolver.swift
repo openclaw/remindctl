@@ -14,11 +14,10 @@ public enum IDResolver {
     for input in inputs {
       let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
       if let index = Int(trimmed) {
-        let idx = index - 1
-        guard idx >= 0 && idx < numericSorted.count else {
+        guard index > 0 && index <= numericSorted.count else {
           throw RemindCoreError.invalidIdentifier(trimmed)
         }
-        resolved.append(numericSorted[idx])
+        resolved.append(numericSorted[index - 1])
         continue
       }
 
