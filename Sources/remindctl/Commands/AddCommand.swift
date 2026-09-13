@@ -140,7 +140,7 @@ enum AddCommand {
     }
   }
 
-  private static func makeLocationTrigger(
+  static func makeLocationTrigger(
     location: String?,
     radius: String?,
     leaving: Bool
@@ -160,7 +160,7 @@ enum AddCommand {
   }
 
   private static func parseRadius(_ value: String) throws -> Double {
-    guard let radius = Double(value), radius > 0 else {
+    guard let radius = Double(value), radius.isFinite, radius > 0 else {
       throw RemindCoreError.operationFailed("Invalid radius: \"\(value)\"")
     }
     return radius

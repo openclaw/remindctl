@@ -91,6 +91,7 @@ remindctl list --list-id 7A12 --rename Archive
 ```
 
 Mutating list operations accept one list name. Read-only list views can accept multiple names.
+Choose only one of `--create`, `--delete`, or `--rename`, and provide its target; conflicting or missing mutation targets fail before accessing Reminders.
 `list <name> --create` creates a missing list or reuses a unique matching list. Repeating it preserves the list and its reminders; `--json` reports the current incomplete and overdue counts. An ambiguous name fails instead of creating another list.
 List names resolve by exact match, case-insensitive match, then a normalized match that ignores emoji and punctuation.
 If a name is ambiguous, use `--list-id`.
@@ -144,3 +145,11 @@ Global output flags:
 - `--quiet` emits minimal output.
 - `--no-color` disables colored output.
 - `--no-input` disables interactive prompts.
+
+Use `--` before positional text that starts with a hyphen, including literal help or version flags:
+
+```bash
+remindctl add -- "--help"
+```
+
+Help and version flags after `--` are passed to the command as text.

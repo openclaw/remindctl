@@ -3,6 +3,13 @@ import Foundation
 import RemindCore
 
 enum ListCommand {
+  enum Action: Equatable {
+    case show
+    case create
+    case delete
+    case rename(String)
+  }
+
   static var spec: CommandSpec {
     CommandSpec(
       name: "list",
@@ -45,33 +52,28 @@ enum ListCommand {
     ) { values, runtime in
       let names = values.positional
       let listID = values.option("listID")
-      let renameTo = values.option("rename")
-      let deleteList = values.flag("delete")
-      let createList = values.flag("create")
+      let action = try action(
+        names: names,
+        listID: listID,
+        create: values.flag("create"),
+        delete: values.flag("delete"),
+        renameTo: values.option("rename"))
       let force = values.flag("force")
 
       let store = RemindersStore()
       try await store.requestAccess()
 
       if !names.isEmpty || listID != nil {
-        let isMutation = deleteList || renameTo != nil || createList
+        let isMutation = action != .show
         if shouldReadMultipleLists(names: names, listID: listID, isMutation: isMutation) {
           let reminders = try await reminders(in: names, store: store)
           OutputRenderer.printReminders(reminders, format: runtime.outputFormat)
           return
         }
 
-        let name: String? =
-          if names.isEmpty {
-            nil
-          } else {
-            try singleListName(names, forMutation: isMutation)
-          }
+        let name = names.first
         let target = try CommandHelpers.listTarget(name: name, id: listID)
-        if createList && listID != nil {
-          throw RemindCoreError.operationFailed("Use a list name, not --list-id, with --create")
-        }
-        if deleteList {
+        if action == .delete {
           guard let target else {
             throw ParsedValuesError.missingArgument("name")
           }
@@ -88,7 +90,7 @@ enum ListCommand {
           return
         }
 
-        if let renameTo {
+        if case .rename(let renameTo) = action {
           guard let target else {
             throw ParsedValuesError.missingArgument("name")
           }
@@ -100,7 +102,7 @@ enum ListCommand {
           return
         }
 
-        if createList {
+        if action == .create {
           guard let name else {
             throw ParsedValuesError.missingArgument("name")
           }
@@ -145,6 +147,30 @@ enum ListCommand {
 
       OutputRenderer.printLists(summaries(for: lists, reminders: reminders), format: runtime.outputFormat)
     }
+  }
+
+  static func action(
+    names: [String], listID: String?, create: Bool, delete: Bool, renameTo: String?
+  ) throws -> Action {
+    var actions: [Action] = []
+    if create { actions.append(.create) }
+    if delete { actions.append(.delete) }
+    if let renameTo { actions.append(.rename(renameTo)) }
+    guard actions.count <= 1 else {
+      throw RemindCoreError.operationFailed("Use only one of --create, --delete, or --rename")
+    }
+    guard let action = actions.first else { return .show }
+    guard !names.isEmpty || listID != nil else {
+      throw ParsedValuesError.missingArgument("name")
+    }
+    if !names.isEmpty {
+      _ = try singleListName(names, forMutation: true)
+    }
+    if action == .create && listID != nil {
+      throw RemindCoreError.operationFailed("Use a list name, not --list-id, with --create")
+    }
+    _ = try CommandHelpers.listTarget(name: names.first, id: listID)
+    return action
   }
 
   static func summaries(

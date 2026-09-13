@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Reject conflicting list mutations and missing targets before accessing Reminders, preventing combinations such as `--delete --rename` from silently deleting a list.
+- Respect `--` when interpreting help/version flags and allow the CLI executable to be renamed without breaking command resolution.
+- Reject infinite geofence radii before geocoding or saving a reminder.
 - Run developer checks once with the existing 90% coverage gate, pin CI to Swift 6.2 and current Node/pnpm tooling, and execute universal CLI smoke checks in CI.
 
 ## 0.3.6 - 2026-09-07

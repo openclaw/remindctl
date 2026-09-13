@@ -203,6 +203,7 @@ remindctl add "Get groceries" --location "123 Main St" --radius 200
 ```
 
 Location triggers use EventKit and CoreLocation geocoding. They may depend on system location services and network availability.
+Geofence radii must be finite, positive numbers of meters.
 
 ## Output
 

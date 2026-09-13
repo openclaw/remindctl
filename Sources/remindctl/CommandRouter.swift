@@ -47,13 +47,14 @@ struct CommandRouter {
   func run(argv: [String]) async -> Int32 {
     var argv = normalizeArguments(argv)
     argv = applyAliases(argv)
+    let controlArguments = argv.prefix { $0 != "--" }
 
-    if argv.contains("--version") || argv.contains("-V") {
+    if controlArguments.contains("--version") || controlArguments.contains("-V") {
       Swift.print(version)
       return 0
     }
 
-    if argv.contains("--help") || argv.contains("-h") {
+    if controlArguments.contains("--help") || controlArguments.contains("-h") {
       printHelp(for: argv)
       return 0
     }
@@ -93,7 +94,7 @@ struct CommandRouter {
   private func normalizeArguments(_ argv: [String]) -> [String] {
     guard !argv.isEmpty else { return argv }
     var copy = argv
-    copy[0] = URL(fileURLWithPath: argv[0]).lastPathComponent
+    copy[0] = rootName
     return copy
   }
 
