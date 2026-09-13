@@ -50,13 +50,7 @@ public actor RemindersStore {
   }
 
   public func resolveList(_ target: ReminderListTarget) async throws -> ReminderList {
-    let lists = await lists()
-    switch target {
-    case .name(let name):
-      return try ListResolver.resolve(name, in: lists)
-    case .id(let id):
-      return try ListResolver.resolveID(id, in: lists)
-    }
+    try resolvedList(matching: target, in: await lists())
   }
 
   public func defaultListName() -> String? { defaultList()?.title }
@@ -220,73 +214,6 @@ extension RemindersStore {
     }
   }
 
-  struct ReminderData: Sendable {
-    let id: String
-    let title: String
-    let notes: String?
-    let url: URL?
-    let isCompleted: Bool
-    let completionDate: Date?
-    let creationDate: Date?
-    let lastModifiedDate: Date?
-    let priority: Int
-    let dueDateComponents: DateComponents?
-    let dueDateIsAllDay: Bool
-    let alarmDate: Date?
-    let recurrenceRule: RecurrenceRule?
-    let locationTrigger: LocationTrigger?
-    let listID: String
-    let listName: String
-  }
-
-  static func reminderItem(from reminder: EKReminder, calendar: Calendar = .current) throws -> ReminderItem {
-    guard let data = reminderData(from: reminder) else {
-      throw RemindCoreError.operationFailed("Reminder is missing a calendar")
-    }
-    return ReminderItem(
-      id: data.id,
-      title: data.title,
-      notes: data.notes,
-      url: data.url,
-      isCompleted: data.isCompleted,
-      completionDate: data.completionDate,
-      creationDate: data.creationDate,
-      lastModifiedDate: data.lastModifiedDate,
-      priority: ReminderPriority(eventKitValue: data.priority),
-      dueDate: data.dueDateComponents.flatMap { calendar.date(from: $0) },
-      dueDateIsAllDay: data.dueDateIsAllDay,
-      alarmDate: data.alarmDate,
-      recurrenceRule: data.recurrenceRule,
-      locationTrigger: data.locationTrigger,
-      listID: data.listID,
-      listName: data.listName
-    )
-  }
-
-  static func reminderData(from reminder: EKReminder) -> ReminderData? {
-    // Skip orphaned reminders before dereferencing EventKit's calendar IUO.
-    guard let calendar = reminder.calendar else { return nil }
-    let components = reminder.dueDateComponents
-    return ReminderData(
-      id: reminder.calendarItemIdentifier,
-      title: reminder.title ?? "",
-      notes: reminder.notes,
-      url: reminder.url,
-      isCompleted: reminder.isCompleted,
-      completionDate: reminder.completionDate,
-      creationDate: reminder.creationDate,
-      lastModifiedDate: reminder.lastModifiedDate,
-      priority: Int(reminder.priority),
-      dueDateComponents: components,
-      dueDateIsAllDay: isAllDay(components),
-      alarmDate: alarmDate(from: reminder),
-      recurrenceRule: recurrenceRule(from: reminder),
-      locationTrigger: locationTrigger(from: reminder),
-      listID: calendar.calendarIdentifier,
-      listName: calendar.title
-    )
-  }
-
   private func fetchReminders(in calendars: [EKCalendar]) async throws -> [ReminderItem] {
     let context = EventKitFetchContext(eventStore: eventStore, calendars: calendars)
     let reminderData: [ReminderData] = try await AsyncTimeout.withTimeout(
@@ -302,26 +229,7 @@ extension RemindersStore {
       return { request.cancel() }
     }
 
-    return reminderData.map { data in
-      ReminderItem(
-        id: data.id,
-        title: data.title,
-        notes: data.notes,
-        url: data.url,
-        isCompleted: data.isCompleted,
-        completionDate: data.completionDate,
-        creationDate: data.creationDate,
-        lastModifiedDate: data.lastModifiedDate,
-        priority: ReminderPriority(eventKitValue: data.priority),
-        dueDate: date(from: data.dueDateComponents),
-        dueDateIsAllDay: data.dueDateIsAllDay,
-        alarmDate: data.alarmDate,
-        recurrenceRule: data.recurrenceRule,
-        locationTrigger: data.locationTrigger,
-        listID: data.listID,
-        listName: data.listName
-      )
-    }
+    return reminderData.map { $0.item(calendar: calendar) }
   }
 
   private func reminder(withID id: String) throws -> EKReminder {
@@ -329,10 +237,6 @@ extension RemindersStore {
       throw RemindCoreError.reminderNotFound(id)
     }
     return item
-  }
-
-  private func calendar(named name: String) throws -> EKCalendar {
-    try calendar(matching: .name(name))
   }
 
   private func calendar(matching target: ReminderListTarget) throws -> EKCalendar {
@@ -387,19 +291,8 @@ extension RemindersStore {
     return result
   }
 
-  private func date(from components: DateComponents?) -> Date? {
-    guard let components else { return nil }
-    return calendar.date(from: components)
-  }
-
   private func item(from reminder: EKReminder) throws -> ReminderItem {
     try Self.reminderItem(from: reminder, calendar: calendar)
-  }
-
-  private static func alarmDate(from reminder: EKReminder) -> Date? {
-    reminder.alarms?
-      .compactMap(\.absoluteDate)
-      .min()
   }
 
   private func replaceRecurrence(on reminder: EKReminder, with rule: RecurrenceRule?) {
@@ -411,16 +304,10 @@ extension RemindersStore {
       EKRecurrenceRule(recurrenceWith: rule.eventKitFrequency, interval: rule.interval, end: nil))
   }
 
-  private static func recurrenceRule(from reminder: EKReminder) -> RecurrenceRule? {
-    guard let rule = reminder.recurrenceRules?.first else { return nil }
-    guard let frequency = RecurrenceFrequency(eventKitFrequency: rule.frequency) else { return nil }
-    return RecurrenceRule(frequency: frequency, interval: rule.interval)
-  }
-
 }
 
 extension RecurrenceFrequency {
-  fileprivate init?(eventKitFrequency: EKRecurrenceFrequency) {
+  init?(eventKitFrequency: EKRecurrenceFrequency) {
     switch eventKitFrequency {
     case .daily:
       self = .daily
