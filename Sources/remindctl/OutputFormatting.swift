@@ -21,7 +21,6 @@ struct AuthorizationSummary: Codable, Sendable, Equatable {
   let authorized: Bool
 }
 
-// swiftlint:disable:next type_body_length
 enum OutputRenderer {
   static func printReminders(_ reminders: [ReminderItem], format: OutputFormat) {
     switch format {
@@ -39,32 +38,10 @@ enum OutputRenderer {
   }
 
   static func printSearchResults(_ reminders: [ReminderItem], format: OutputFormat) {
-    switch format {
-    case .standard:
+    if format == .standard {
       printSearchResultsStandard(reminders)
-    case .table:
-      printRemindersTable(reminders)
-    case .plain:
-      printRemindersPlain(reminders)
-    case .json:
-      printJSON(reminders)
-    case .quiet:
-      Swift.print(reminders.count)
-    }
-  }
-
-  static func printLists(_ summaries: [ListSummary], format: OutputFormat) {
-    switch format {
-    case .standard:
-      printListsStandard(summaries)
-    case .table:
-      printListsTable(summaries)
-    case .plain:
-      printListsPlain(summaries)
-    case .json:
-      printJSON(summaries)
-    case .quiet:
-      Swift.print(summaries.count)
+    } else {
+      printReminders(reminders, format: format)
     }
   }
 
@@ -90,9 +67,7 @@ enum OutputRenderer {
 
   static func printReminderDetail(_ reminder: ReminderItem, format: OutputFormat) {
     switch format {
-    case .standard:
-      printReminderDetailStandard(reminder)
-    case .table:
+    case .standard, .table:
       printReminderDetailStandard(reminder)
     case .plain:
       Swift.print(plainLine(for: reminder))
@@ -105,9 +80,7 @@ enum OutputRenderer {
 
   static func printDeleteResult(_ count: Int, format: OutputFormat) {
     switch format {
-    case .standard:
-      Swift.print("Deleted \(count) reminder(s)")
-    case .table:
+    case .standard, .table:
       Swift.print("Deleted \(count) reminder(s)")
     case .plain:
       Swift.print("\(count)")
@@ -121,9 +94,7 @@ enum OutputRenderer {
 
   static func printAuthorizationStatus(_ status: RemindersAuthorizationStatus, format: OutputFormat) {
     switch format {
-    case .standard:
-      Swift.print("Reminders access: \(status.displayName)")
-    case .table:
+    case .standard, .table:
       Swift.print("Reminders access: \(status.displayName)")
     case .plain:
       Swift.print(status.rawValue)
@@ -141,15 +112,7 @@ enum OutputRenderer {
       return
     }
     for (index, reminder) in sorted.enumerated() {
-      let status = reminder.isCompleted ? "x" : " "
-      let due =
-        reminder.dueDate.map {
-          DateParsing.formatDisplay($0, isDateOnly: reminder.dueDateIsAllDay)
-        } ?? "no due date"
-      let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
-      let recurrence = recurrenceSuffix(for: reminder)
-      Swift.print(
-        "[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(recurrence)")
+      Swift.print("[\(index + 1)] \(standardLine(for: reminder))")
     }
   }
 
@@ -191,16 +154,19 @@ enum OutputRenderer {
       return
     }
     for reminder in sorted {
-      let status = reminder.isCompleted ? "x" : " "
-      let due =
-        reminder.dueDate.map {
-          DateParsing.formatDisplay($0, isDateOnly: reminder.dueDateIsAllDay)
-        } ?? "no due date"
-      let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
-      let recurrence = recurrenceSuffix(for: reminder)
-      Swift.print(
-        "[\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(recurrence) id=\(reminder.id)")
+      Swift.print("\(standardLine(for: reminder)) id=\(reminder.id)")
     }
+  }
+
+  private static func standardLine(for reminder: ReminderItem) -> String {
+    let status = reminder.isCompleted ? "x" : " "
+    let due =
+      reminder.dueDate.map {
+        DateParsing.formatDisplay($0, isDateOnly: reminder.dueDateIsAllDay)
+      } ?? "no due date"
+    let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
+    let recurrence = recurrenceSuffix(for: reminder)
+    return "[\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(recurrence)"
   }
 
   private static func printReminderDetailStandard(_ reminder: ReminderItem) {
@@ -259,36 +225,6 @@ enum OutputRenderer {
       due,
       reminder.title,
     ].joined(separator: "\t")
-  }
-
-  private static func printListsStandard(_ summaries: [ListSummary]) {
-    guard !summaries.isEmpty else {
-      Swift.print("No reminder lists found")
-      return
-    }
-    for summary in summaries.sorted(by: { $0.title < $1.title }) {
-      let overdue = summary.overdueCount > 0 ? " (\(summary.overdueCount) overdue)" : ""
-      Swift.print("\(summary.title) — \(summary.reminderCount) reminders\(overdue)")
-    }
-  }
-
-  private static func printListsPlain(_ summaries: [ListSummary]) {
-    for summary in summaries.sorted(by: { $0.title < $1.title }) {
-      Swift.print("\(summary.title)\t\(summary.reminderCount)\t\(summary.overdueCount)")
-    }
-  }
-
-  private static func printListsTable(_ summaries: [ListSummary]) {
-    Swift.print(["ID", "Title", "Open", "Overdue"].joined(separator: "\t"))
-    for summary in summaries.sorted(by: { $0.title < $1.title }) {
-      Swift.print(
-        [
-          shortID(summary.id),
-          summary.title,
-          "\(summary.reminderCount)",
-          "\(summary.overdueCount)",
-        ].joined(separator: "\t"))
-    }
   }
 
   static func printJSON<T: Encodable>(_ payload: T) {
