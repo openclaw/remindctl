@@ -33,14 +33,14 @@ jobs:
             runner: ubuntu-latest
             build-mode: none
           - language: swift
-            runner: macos-15
+            runner: macos-26
             build-mode: manual
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Prepare Swift dependencies
         if: matrix.language == 'swift'
         env:
-          DEVELOPER_DIR: /Applications/Xcode_26.0.1.app/Contents/Developer
+          DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
         run: |
           echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
           swift --version

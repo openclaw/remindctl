@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Update CI and Swift CodeQL builds to Xcode 26.6 on macOS 26 while retaining the macOS 14 deployment target.
 - Reject conflicting list mutations and missing targets before accessing Reminders, preventing combinations such as `--delete --rename` from silently deleting a list.
 - Respect `--` when interpreting help/version flags and allow the CLI executable to be renamed without breaking command resolution.
 - Reject infinite geofence radii before geocoding or saving a reminder.
