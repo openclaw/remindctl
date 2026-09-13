@@ -4,18 +4,18 @@
   "private": true,
   "scripts": {
     "version:sync": "scripts/generate-version.sh",
-    "remindctl": "pnpm -s version:sync && swift package clean && swift run remindctl",
-    "start": "pnpm -s remindctl",
+    "remindctl": "pnpm run --reporter=silent version:sync && swift package clean && swift run remindctl",
+    "start": "pnpm run --reporter=silent remindctl",
     "format": "swift format --in-place --recursive Sources Tests",
     "lint": "swift format lint --recursive Sources Tests && swiftlint --strict && shellcheck -x scripts/*.sh && actionlint .github/workflows/*.yml",
-    "test": "pnpm -s version:sync && swift test --enable-code-coverage",
+    "test": "pnpm run --reporter=silent version:sync && swift test --enable-code-coverage",
     "coverage": "scripts/check-coverage.sh",
     "release:harness": "scripts/test-release.sh",
     "release:check": "scripts/check-release.sh",
-    "check": "pnpm -s lint && pnpm -s coverage",
+    "check": "pnpm run --reporter=silent lint && pnpm run --reporter=silent coverage",
     "docs:site": "node scripts/build-docs-site.mjs",
     "clean": "swift package clean",
-    "build": "pnpm -s version:sync && mkdir -p bin && swift build -c release --product remindctl && cp .build/release/remindctl bin/remindctl && codesign --force --sign - --identifier com.steipete.remindctl bin/remindctl"
+    "build": "pnpm run --reporter=silent version:sync && mkdir -p bin && swift build -c release --product remindctl && cp .build/release/remindctl bin/remindctl && codesign --force --sign - --identifier com.steipete.remindctl bin/remindctl"
   },
   "packageManager": "pnpm@12.4.1"
 }
