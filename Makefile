@@ -31,7 +31,6 @@ test:
 
 check:
 	$(MAKE) lint
-	$(MAKE) test
 	scripts/check-coverage.sh
 
 build:

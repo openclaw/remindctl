@@ -8,21 +8,29 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   docs:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "26"
+          node-version-file: .node-version
       - name: Build docs site
         run: make docs-site
 
   build:
     runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.0.1.app/Contents/Developer
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Swift version
         run: swift --version
       - name: Install linters
@@ -37,9 +45,16 @@ jobs:
         run: shellcheck -x scripts/*.sh && actionlint .github/workflows/*.yml
       - name: Swift test + coverage
         run: scripts/check-coverage.sh
-      - name: Swift build
-        run: swift build -c release --product remindctl
       - name: Credential-free release harness
         run: scripts/test-release.sh
       - name: Credential-free universal candidate
         run: make macos-artifact
+      - name: Run the universal candidate natively
+        run: |
+          unzip -q dist/remindctl-macos-local.zip -d "$RUNNER_TEMP/remindctl-smoke"
+          binary="$RUNNER_TEMP/remindctl-smoke/remindctl"
+          source version.env
+          test "$(env -u REMINDCTL_VERSION "$binary" --version)" = "$MARKETING_VERSION"
+          "$binary" --help
+          "$binary" completion bash | bash -n
+          "$binary" completion zsh | zsh -n

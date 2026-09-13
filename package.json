@@ -12,9 +12,10 @@
     "coverage": "scripts/check-coverage.sh",
     "release:harness": "scripts/test-release.sh",
     "release:check": "scripts/check-release.sh",
-    "check": "pnpm -s lint && pnpm -s test && pnpm -s coverage",
+    "check": "pnpm -s lint && pnpm -s coverage",
     "docs:site": "node scripts/build-docs-site.mjs",
     "clean": "swift package clean",
     "build": "pnpm -s version:sync && mkdir -p bin && swift build -c release --product remindctl && cp .build/release/remindctl bin/remindctl && codesign --force --sign - --identifier com.steipete.remindctl bin/remindctl"
-  }
+  },
+  "packageManager": "pnpm@12.4.1"
 }

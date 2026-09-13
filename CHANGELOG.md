@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Run developer checks once with the existing 90% coverage gate, pin CI to Swift 6.2 and current Node/pnpm tooling, and execute universal CLI smoke checks in CI.
+
 ## 0.3.6 - 2026-09-07
 
 **Highlights:** Clearer alarm guidance and a repaired Homebrew release handoff.

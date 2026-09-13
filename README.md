@@ -301,6 +301,11 @@ Supporting those would require Apple to expose new public APIs or a separate non
 
 ## Development
 
+The package manager is pinned in `package.json`, and `.node-version` selects the docs runtime.
+CI uses Xcode 26.0.1 (Swift 6.2), builds both release architectures, and runs the universal CLI natively.
+`make check` runs the Swift tests once with coverage and retains the 90% RemindCore gate.
+CodeQL scans Swift with an explicit package build after dependency resolution, plus JavaScript/TypeScript and Actions.
+
 ```bash
 make remindctl ARGS="status"   # clean build + run
 make check                     # strict lint + tests + 90% coverage gate
