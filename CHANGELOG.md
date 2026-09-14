@@ -1,14 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.3.7 - 2026-09-13
 
-- Update CI and Swift CodeQL builds to Xcode 26.6 on macOS 26 while retaining the macOS 14 deployment target.
+**Highlights:** `--delete --rename` can no longer silently delete a list, and list mutations are validated before Reminders is touched.
+
 - Reject conflicting list mutations and missing targets before accessing Reminders, preventing combinations such as `--delete --rename` from silently deleting a list.
+- Honor the supplied calendar's time zone when RemindCore parses local dates, while retaining explicit ISO 8601 offsets.
 - Respect `--` when interpreting help/version flags and allow the CLI executable to be renamed without breaking command resolution.
 - Reject infinite geofence radii before geocoding or saving a reminder.
-- Run developer checks once with the existing 90% coverage gate, pin CI to Swift 6.2 and current Node/pnpm tooling, and execute universal CLI smoke checks in CI.
 - Reject out-of-range numeric reminder indexes before converting them to array offsets, preventing an arithmetic-overflow crash for the minimum integer.
-- Honor the supplied calendar's time zone when RemindCore parses local dates, while retaining explicit ISO 8601 offsets.
+- Update CI and Swift CodeQL builds to Xcode 26.6 on macOS 26 while retaining the macOS 14 deployment target.
+- Run developer checks once with the existing 90% coverage gate, pin CI to Swift 6.2 and current Node/pnpm tooling, and execute universal CLI smoke checks in CI.
 
 ## 0.3.6 - 2026-09-07
 
