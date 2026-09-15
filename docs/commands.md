@@ -75,6 +75,7 @@ remindctl edit 4A83 --no-repeat
 
 `edit`, `complete`, and `delete` accept indexes from the current default listing or ID prefixes.
 Numeric indexes must be positive and within the current view; out-of-range values return an error.
+Reminders sort by due date, then title, then stable ID so equal dates and titles do not make numeric targets depend on EventKit's fetch order. Use IDs when reminders may be added, removed, or edited between commands.
 
 If `add`, `edit`, or `complete` reports `Reminder is missing a calendar`, EventKit saved the reminder but returned it without its list. Check Reminders.app before retrying; this error does not roll back the saved change.
 

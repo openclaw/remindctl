@@ -97,17 +97,21 @@ public enum ReminderFiltering {
     reminders.sorted { lhs, rhs in
       switch (lhs.dueDate, rhs.dueDate) {
       case (nil, nil):
-        return lhs.title < rhs.title
+        break
       case (nil, _?):
         return false
       case (_?, nil):
         return true
       case (let left?, let right?):
-        if left == right {
-          return lhs.title < rhs.title
+        if left != right {
+          return left < right
         }
-        return left < right
       }
+      if lhs.title != rhs.title {
+        return lhs.title < rhs.title
+      }
+      // EventKit fetch order can change between displaying and resolving a numeric index.
+      return lhs.id < rhs.id
     }
   }
 }
