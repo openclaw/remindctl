@@ -32,26 +32,17 @@ public enum DateParsing {
       return relative
     }
 
-    let iso =
-      isoFormatter(withFraction: true).date(from: trimmed)
-      ?? isoFormatter(withFraction: false).date(from: trimmed)
-    if let iso {
-      return ParsedUserDate(date: iso, isDateOnly: false)
-    }
-
-    let localISO =
-      localFormatter(format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSS", calendar: calendar).date(from: trimmed)
-      ?? localFormatter(format: "yyyy-MM-dd'T'HH:mm:ss.SSS", calendar: calendar).date(from: trimmed)
-      ?? localFormatter(format: "yyyy-MM-dd'T'HH:mm:ss", calendar: calendar).date(from: trimmed)
-      ?? localFormatter(format: "yyyy-MM-dd'T'HH:mm", calendar: calendar).date(from: trimmed)
-    if let localISO {
-      return ParsedUserDate(date: localISO, isDateOnly: false)
-    }
-
-    for (formatter, isDateOnly) in dateFormatters(calendar: calendar) {
-      if let date = formatter.date(from: trimmed) {
-        return ParsedUserDate(date: date, isDateOnly: isDateOnly)
-      }
+    let absolute = trimmed.uppercased()
+    for (pattern, format, isDateOnly) in absoluteFormats {
+      // DateFormatter accepts alternate separators and field widths even when not lenient.
+      guard absolute.range(of: "\\A\(pattern)\\z", options: .regularExpression) != nil else { continue }
+      let formatter = DateFormatter()
+      formatter.locale = Locale(identifier: "en_US_POSIX")
+      formatter.calendar = Calendar(identifier: .gregorian)
+      formatter.timeZone = calendar.timeZone
+      formatter.dateFormat = format
+      formatter.isLenient = false
+      return formatter.date(from: absolute).map { ParsedUserDate(date: $0, isDateOnly: isDateOnly) }
     }
 
     return nil
@@ -83,35 +74,25 @@ public enum DateParsing {
     }
   }
 
-  private static func isoFormatter(withFraction: Bool) -> ISO8601DateFormatter {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions =
-      withFraction
-      ? [.withInternetDateTime, .withFractionalSeconds]
-      : [.withInternetDateTime]
-    return formatter
-  }
-
-  private static func localFormatter(format: String, calendar: Calendar) -> DateFormatter {
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = calendar.timeZone
-    formatter.dateFormat = format
-    return formatter
-  }
-
-  private static func dateFormatters(calendar: Calendar) -> [(DateFormatter, Bool)] {
-    let formats: [(String, Bool)] = [
-      ("yyyy-MM-dd", true),
-      ("yyyy-MM-dd HH:mm", false),
-      ("yyyy-MM-dd HH:mm:ss", false),
-      ("MM/dd/yyyy", true),
-      ("MM/dd/yyyy HH:mm", false),
-      ("dd-MM-yy", true),
-      ("dd-MM-yyyy", true),
+  private static var absoluteFormats: [(pattern: String, format: String, isDateOnly: Bool)] {
+    let date = "[0-9]{4}-[0-9]{2}-[0-9]{2}"
+    let hour = "(?:[01][0-9]|2[0-3])"
+    let time = "\(hour):[0-5][0-9]"
+    let seconds = "\(time):[0-5][0-9]"
+    let zone = "(?:Z|[+-]\(hour):?[0-5][0-9])"
+    return [
+      ("\(date)T\(seconds)\\.[0-9]+\(zone)", "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXXXX", false),
+      ("\(date)T\(seconds)\(zone)", "yyyy-MM-dd'T'HH:mm:ssXXXXX", false),
+      ("\(date)T\(seconds)\\.[0-9]+", "yyyy-MM-dd'T'HH:mm:ss.SSSSSS", false),
+      ("\(date)T\(seconds)", "yyyy-MM-dd'T'HH:mm:ss", false),
+      ("\(date)T\(time)", "yyyy-MM-dd'T'HH:mm", false),
+      (date, "yyyy-MM-dd", true),
+      ("\(date) \(time)", "yyyy-MM-dd HH:mm", false),
+      ("\(date) \(seconds)", "yyyy-MM-dd HH:mm:ss", false),
+      ("[0-9]{2}/[0-9]{2}/[0-9]{4}", "MM/dd/yyyy", true),
+      ("[0-9]{2}/[0-9]{2}/[0-9]{4} \(time)", "MM/dd/yyyy HH:mm", false),
+      ("[0-9]{2}-[0-9]{2}-[0-9]{2}", "dd-MM-yy", true),
+      ("[0-9]{2}-[0-9]{2}-[0-9]{4}", "dd-MM-yyyy", true),
     ]
-    return formats.map { format, isDateOnly in
-      (localFormatter(format: format, calendar: calendar), isDateOnly)
-    }
   }
 }
