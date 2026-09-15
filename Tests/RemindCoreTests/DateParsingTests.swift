@@ -91,11 +91,34 @@ struct DateParsingTests {
   }
 
   @Test(
+    "Preserve unambiguous legacy date spellings",
+    arguments: [
+      "2026-1-3", "2026/1/3", "2026.1.3", "1/3/2026",
+    ])
+  func legacyDateSpellings(_ input: String) throws {
+    let parsed = try #require(DateParsing.parseUserDateWithMetadata(input, calendar: calendar))
+    #expect(parsed.date == calendar.date(from: DateComponents(year: 2026, month: 1, day: 3)))
+    #expect(parsed.isDateOnly)
+  }
+
+  @Test(
+    "Preserve unpadded times and whitespace",
+    arguments: [
+      "2026-01-03 9:05", "2026-01-03 9:5", "2026-1-3T9:5", "2026-01-03   09:05",
+    ])
+  func legacyTimeSpellings(_ input: String) throws {
+    let parsed = try #require(DateParsing.parseUserDateWithMetadata(input, calendar: calendar))
+    #expect(parsed.date == calendar.date(from: DateComponents(year: 2026, month: 1, day: 3, hour: 9, minute: 5)))
+    #expect(!parsed.isDateOnly)
+  }
+
+  @Test(
     "Valid ISO offsets and fractions survive strict validation",
     arguments: [
       "2024-02-29T12:34:56Z", "2024-02-29T12:34:56.123456Z",
       "2024-02-29T14:34:56+02:00", "2024-02-29T02:34:56-1000",
       "2024-02-29t12:34:56z",
+      "2024-2-29T2:34:56-1000",
     ])
   func validAbsoluteDates(_ input: String) throws {
     let parsed = try #require(DateParsing.parseUserDateWithMetadata(input, calendar: calendar))

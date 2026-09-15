@@ -162,7 +162,7 @@ Accepted by `--due` and date filters:
 - Local ISO 8601 without timezone, such as `2026-01-03T12:34:56`
 
 Date-only due values create all-day reminders. Date-time values create timed reminders.
-Absolute dates must match the specified format and contain a valid calendar date, time, and offset; invalid dates and trailing text are rejected. Legacy `MM/dd/yyyy` and `dd-MM-yy`/`dd-MM-yyyy` inputs retain their explicit month/day order.
+Absolute dates must contain a valid calendar date, time, and offset; invalid dates and trailing text are rejected. Unpadded month/day/time fields and year-first `/` or `.` separators remain accepted. Legacy `MM/dd/yyyy` and `dd-MM-yy`/`dd-MM-yyyy` inputs retain their explicit month/day order.
 
 ## Alarms
 

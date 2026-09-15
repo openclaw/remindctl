@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Reject impossible ISO dates, malformed offsets, and trailing date text; match absolute date formats exactly so day-first inputs cannot silently become another date.
+- Reject impossible ISO dates, malformed offsets, and trailing date text; select explicit field order so day-first inputs cannot silently become another date while retaining unambiguous legacy spellings.
 
 ## 0.3.7 - 2026-09-13
 

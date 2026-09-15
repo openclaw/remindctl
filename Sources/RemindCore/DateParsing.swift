@@ -34,7 +34,7 @@ public enum DateParsing {
 
     let absolute = trimmed.uppercased()
     for (pattern, format, isDateOnly) in absoluteFormats {
-      // DateFormatter accepts alternate separators and field widths even when not lenient.
+      // Select field order before parsing: DateFormatter can otherwise reinterpret day-first dates.
       guard absolute.range(of: "\\A\(pattern)\\z", options: .regularExpression) != nil else { continue }
       let formatter = DateFormatter()
       formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -75,11 +75,10 @@ public enum DateParsing {
   }
 
   private static var absoluteFormats: [(pattern: String, format: String, isDateOnly: Bool)] {
-    let date = "[0-9]{4}-[0-9]{2}-[0-9]{2}"
-    let hour = "(?:[01][0-9]|2[0-3])"
-    let time = "\(hour):[0-5][0-9]"
-    let seconds = "\(time):[0-5][0-9]"
-    let zone = "(?:Z|[+-]\(hour):?[0-5][0-9])"
+    let date = "[0-9]{4}[-/.][0-9]{1,2}[-/.][0-9]{1,2}"
+    let time = "(?:[01]?[0-9]|2[0-3]):[0-5]?[0-9]"
+    let seconds = "\(time):[0-5]?[0-9]"
+    let zone = "(?:Z|[+-](?:[01][0-9]|2[0-3]):?[0-5][0-9])"
     return [
       ("\(date)T\(seconds)\\.[0-9]+\(zone)", "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXXXX", false),
       ("\(date)T\(seconds)\(zone)", "yyyy-MM-dd'T'HH:mm:ssXXXXX", false),
@@ -87,12 +86,12 @@ public enum DateParsing {
       ("\(date)T\(seconds)", "yyyy-MM-dd'T'HH:mm:ss", false),
       ("\(date)T\(time)", "yyyy-MM-dd'T'HH:mm", false),
       (date, "yyyy-MM-dd", true),
-      ("\(date) \(time)", "yyyy-MM-dd HH:mm", false),
-      ("\(date) \(seconds)", "yyyy-MM-dd HH:mm:ss", false),
-      ("[0-9]{2}/[0-9]{2}/[0-9]{4}", "MM/dd/yyyy", true),
-      ("[0-9]{2}/[0-9]{2}/[0-9]{4} \(time)", "MM/dd/yyyy HH:mm", false),
-      ("[0-9]{2}-[0-9]{2}-[0-9]{2}", "dd-MM-yy", true),
-      ("[0-9]{2}-[0-9]{2}-[0-9]{4}", "dd-MM-yyyy", true),
+      ("\(date) +\(time)", "yyyy-MM-dd HH:mm", false),
+      ("\(date) +\(seconds)", "yyyy-MM-dd HH:mm:ss", false),
+      ("[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}", "MM/dd/yyyy", true),
+      ("[0-9]{1,2}/[0-9]{1,2}/[0-9]{4} +\(time)", "MM/dd/yyyy HH:mm", false),
+      ("[0-9]{1,2}-[0-9]{1,2}-[0-9]{2}", "dd-MM-yy", true),
+      ("[0-9]{1,2}-[0-9]{1,2}-[0-9]{4}", "dd-MM-yyyy", true),
     ]
   }
 }

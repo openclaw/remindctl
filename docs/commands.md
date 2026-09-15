@@ -58,7 +58,7 @@ Useful `add` options:
 - `--leaving` changes a location trigger to leaving.
 - `--radius <meters>` adjusts the geofence radius.
 
-Due dates and alarms accept relative dates, `YYYY-MM-DD`, local date-times, and ISO 8601 timestamps with explicit offsets. Absolute inputs must match their format exactly; impossible dates, invalid offsets, and trailing text fail instead of being normalized to another date. Legacy slash dates use `MM/dd/yyyy`; day-first hyphen dates use `dd-MM-yy` or `dd-MM-yyyy`.
+Due dates and alarms accept relative dates, `YYYY-MM-DD`, local date-times, and ISO 8601 timestamps with explicit offsets. Impossible dates, invalid offsets, and trailing text fail instead of being normalized to another date. Unpadded month/day/time fields, extra spaces before a time, and year-first `/` or `.` separators remain accepted. Legacy slash dates use `MM/dd/yyyy`; day-first hyphen dates use `dd-MM-yy` or `dd-MM-yyyy`.
 
 `--alarm` schedules a notification; it does not enable the native **Urgent** toggle in Reminders.app. EventKit does not expose Urgent, so `remindctl` cannot set it. Use `--alarm` for a notification, or enable Urgent directly in Reminders.app.
 
