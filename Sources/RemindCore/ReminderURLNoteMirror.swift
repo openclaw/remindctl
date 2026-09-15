@@ -80,21 +80,12 @@ enum ReminderURLNoteMirror {
     var lineStart = text.startIndex
     while lineStart < text.endIndex {
       var lineEnd = lineStart
-      while lineEnd < text.endIndex, text[lineEnd] != "\n", text[lineEnd] != "\r" {
+      while lineEnd < text.endIndex, !text[lineEnd].isNewline {
         lineEnd = text.index(after: lineEnd)
       }
 
-      var nextLineStart = lineEnd
-      if nextLineStart < text.endIndex {
-        if text[nextLineStart] == "\r" {
-          nextLineStart = text.index(after: nextLineStart)
-          if nextLineStart < text.endIndex, text[nextLineStart] == "\n" {
-            nextLineStart = text.index(after: nextLineStart)
-          }
-        } else {
-          nextLineStart = text.index(after: nextLineStart)
-        }
-      }
+      // CRLF is one Swift Character, so consume the entire newline together.
+      let nextLineStart = lineEnd < text.endIndex ? text.index(after: lineEnd) : lineEnd
 
       let line = String(text[lineStart..<lineEnd])
       if line.trimmingCharacters(in: .whitespaces) != candidateLine {

@@ -98,16 +98,16 @@ enum ExportCommand {
     }
   }
 
-  private static func csvField(_ value: String) -> String {
+  static func csvField(_ value: String) -> String {
     let sanitized = neutralizeSpreadsheetFormula(value)
-    if sanitized.contains("\"") || sanitized.contains(",") || sanitized.contains("\n") || sanitized.contains("\r") {
+    if sanitized.contains("\"") || sanitized.contains(",") || sanitized.contains(where: \.isNewline) {
       return "\"\(sanitized.replacingOccurrences(of: "\"", with: "\"\""))\""
     }
     return sanitized
   }
 
   static func neutralizeSpreadsheetFormula(_ value: String) -> String {
-    let trimmed = value.drop { $0 == " " || $0 == "\t" || $0 == "\r" || $0 == "\n" }
+    let trimmed = value.drop { $0 == " " || $0 == "\t" || $0.isNewline }
     guard let first = trimmed.first, ["=", "+", "-", "@"].contains(first) else {
       return value
     }

@@ -123,6 +123,8 @@ remindctl completion zsh
 
 `open --list Work` keeps the historical open-reminders filter. Add `--app` to open that list in Reminders.app.
 
+CSV export quotes multiline fields, including Windows-style CRLF text, and neutralizes formula prefixes after leading whitespace or newlines. Managed URL-note replacement and `--clear-url` also recognize CRLF lines while preserving authored text and its newline style.
+
 ## Diagnostics
 
 ```bash

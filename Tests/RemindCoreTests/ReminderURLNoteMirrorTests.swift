@@ -126,6 +126,19 @@ struct ReminderURLNoteMirrorTests {
     #expect(ReminderURLNoteMirror.apply(notes: withMirror, showing: nil, replacing: url) == authoredNotes)
   }
 
+  @Test("URL edits remove embedded managed lines for each newline style", arguments: ["\n", "\r", "\r\n"])
+  func editsEmbeddedManagedLines(newline: String) throws {
+    let oldURL = try #require(URL(string: "https://example.com/old"))
+    let newURL = try #require(URL(string: "https://example.com/new"))
+    let notes = "Before\(newline)remindctl URL (managed): https://example.com/old\(newline)After"
+    let authored = "Before\(newline)After"
+
+    #expect(ReminderURLNoteMirror.apply(notes: notes, showing: nil, replacing: oldURL) == authored)
+    #expect(
+      ReminderURLNoteMirror.apply(notes: notes, showing: newURL, replacing: oldURL)
+        == "\(authored)\(newline)\(newline)remindctl URL (managed): https://example.com/new")
+  }
+
   @Test("URL mirror preserves authored empty notes when clearing without a managed line")
   func preservesAuthoredEmptyNotesWhenClearingWithoutManagedLine() {
     let oldURL = URL(string: "https://example.com/old")!
