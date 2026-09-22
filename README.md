@@ -80,7 +80,7 @@ Indexes such as `1` come from the default reminder listing. Most commands also a
 | `remindctl status` | Show Reminders permission status |
 | `remindctl authorize` | Request Reminders permission when macOS allows it |
 
-Run `remindctl <command> --help` for the full option list.
+Run `remindctl <command> --help` for the full option list. Unexpected extra arguments are rejected; quote multi-word titles and list names.
 
 ## Showing Reminders
 

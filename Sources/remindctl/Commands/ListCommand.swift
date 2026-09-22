@@ -18,7 +18,7 @@ enum ListCommand {
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
-            .make(label: "name", help: "List name(s)", isOptional: true)
+            .make(label: "name", help: "List name(s)", isOptional: true, parsing: .remaining)
           ],
           options: [
             .make(

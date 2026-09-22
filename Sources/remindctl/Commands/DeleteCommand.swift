@@ -11,7 +11,7 @@ enum DeleteCommand {
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
-            .make(label: "ids", help: "Indexes or ID prefixes", isOptional: true)
+            .make(label: "ids", help: "Indexes or ID prefixes", isOptional: true, parsing: .remaining)
           ],
           flags: [
             .make(label: "dryRun", names: [.short("n"), .long("dry-run")], help: "Preview without changes"),
