@@ -45,8 +45,7 @@ struct CommandRouter {
   }
 
   func run(argv: [String]) async -> Int32 {
-    var argv = normalizeArguments(argv)
-    argv = applyAliases(argv)
+    var argv = applyAliases(argv)
     let controlArguments = argv.prefix { $0 != "--" }
 
     if controlArguments.contains("--version") || controlArguments.contains("-V") {
@@ -62,7 +61,7 @@ struct CommandRouter {
     argv = rewriteImplicitShow(argv)
 
     do {
-      let invocation = try program.resolve(argv: argv)
+      let invocation = try program.resolve(arguments: [rootName] + argv.dropFirst())
       guard let commandName = invocation.path.last,
         let spec = specs.first(where: { $0.name == commandName })
       else {
@@ -89,13 +88,6 @@ struct CommandRouter {
       Console.printError(error.localizedDescription)
       return 1
     }
-  }
-
-  private func normalizeArguments(_ argv: [String]) -> [String] {
-    guard !argv.isEmpty else { return argv }
-    var copy = argv
-    copy[0] = rootName
-    return copy
   }
 
   private func applyAliases(_ argv: [String]) -> [String] {

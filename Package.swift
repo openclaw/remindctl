@@ -9,7 +9,7 @@ let package = Package(
     .executable(name: "remindctl", targets: ["remindctl"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/steipete/Commander.git", from: "0.2.0"),
+    .package(url: "https://github.com/steipete/Commander.git", from: "0.3.0"),
   ],
   targets: [
     .target(

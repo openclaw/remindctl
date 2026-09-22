@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reject surplus positional arguments instead of silently discarding them, using Commander 0.3.0 for strict command validation.
+
 - Keep numeric reminder indexes stable across reordered EventKit fetches by breaking equal due-date/title sort ties with the reminder ID.
 - Reject impossible ISO dates, malformed offsets, and trailing date text; select explicit field order so day-first inputs cannot silently become another date while retaining unambiguous legacy spellings.
 - Handle CRLF as a complete newline when removing managed URL notes and exporting CSV, preventing stale URL mirrors, split CSV records, and missed formula prefixes.
