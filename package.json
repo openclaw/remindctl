@@ -17,5 +17,5 @@
     "clean": "swift package clean",
     "build": "pnpm run --reporter=silent version:sync && mkdir -p bin && swift build -c release --product remindctl && cp .build/release/remindctl bin/remindctl && codesign --force --sign - --identifier com.steipete.remindctl bin/remindctl"
   },
-  "packageManager": "pnpm@12.4.1"
+  "packageManager": "pnpm@12.5.1"
 }
