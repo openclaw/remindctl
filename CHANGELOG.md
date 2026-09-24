@@ -1,11 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.3.8 - 2026-09-24
+
+**Highlights:** Surplus arguments and unsafe date inputs are rejected before they can silently change the intended command or reminder date.
 
 - Reject surplus positional arguments instead of silently discarding them, using Commander 0.3.0 for strict command validation.
-
-- Keep numeric reminder indexes stable across reordered EventKit fetches by breaking equal due-date/title sort ties with the reminder ID.
 - Reject impossible ISO dates, malformed offsets, and trailing date text; select explicit field order so day-first inputs cannot silently become another date while retaining unambiguous legacy spellings.
+- Keep numeric reminder indexes stable across reordered EventKit fetches by breaking equal due-date/title sort ties with the reminder ID.
 - Handle CRLF as a complete newline when removing managed URL notes and exporting CSV, preventing stale URL mirrors, split CSV records, and missed formula prefixes.
 
 ## 0.3.7 - 2026-09-13
