@@ -11,13 +11,19 @@ public enum IDResolver {
     let sorted = ReminderFiltering.sort(reminders)
     let numericSorted = ReminderFiltering.sort(numericReminders ?? reminders)
     var resolved: [ReminderItem] = []
+    var seen: Set<String> = []
+    func appendUnique(_ item: ReminderItem) {
+      if seen.insert(item.id).inserted {
+        resolved.append(item)
+      }
+    }
     for input in inputs {
       let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
       if let index = Int(trimmed) {
         guard index > 0 && index <= numericSorted.count else {
           throw RemindCoreError.invalidIdentifier(trimmed)
         }
-        resolved.append(numericSorted[index - 1])
+        appendUnique(numericSorted[index - 1])
         continue
       }
 
@@ -33,7 +39,7 @@ public enum IDResolver {
         throw RemindCoreError.ambiguousIdentifier(trimmed, matches: matches.map { $0.id })
       }
       if let match = matches.first {
-        resolved.append(match)
+        appendUnique(match)
       }
     }
     return resolved

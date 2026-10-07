@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Resolve repeated reminder indexes, IDs, and prefixes once for delete and complete, preserving input order and accurate preview/confirmation counts. Thanks @SebTardif.
+
 ## 0.3.8 - 2026-09-24
 
 **Highlights:** Surplus arguments and unsafe date inputs are rejected before they can silently change the intended command or reminder date.
