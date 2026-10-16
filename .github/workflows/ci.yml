@@ -45,6 +45,8 @@ jobs:
         run: shellcheck -x scripts/*.sh && actionlint .github/workflows/*.yml
       - name: Swift test + coverage
         run: scripts/check-coverage.sh
+      - name: Test release keychain lifecycle
+        run: python3 scripts/test-release-keychain.py
       - name: Test native release architecture gate
         run: scripts/test-release-architecture.sh
       - name: Test CI release source validation
