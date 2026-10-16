@@ -49,7 +49,7 @@ trap 'rm -f "$notes_file"' EXIT
 
 if rg -n 'github\.com/steipete/remindctl|repository=steipete/remindctl' \
   "$ROOT/README.md" "$ROOT/SKILL.md" "$ROOT/docs" \
-  "$ROOT/scripts/update-homebrew.sh" "$ROOT/.github"; then
+  "$ROOT/.github"; then
   echo "Found a non-canonical source repository URL" >&2
   exit 1
 fi

@@ -1,115 +1,42 @@
 # Releasing
 
-Official releases are built, Developer ID-signed, and notarized on an authorized local Mac. GitHub Actions only verifies an existing draft or published release. It cannot package, sign, notarize, publish, or mutate Homebrew.
+`.github/workflows/release.yml` owns official releases. It builds the universal macOS CLI, signs with **OpenClaw Foundation (FWJYW4S8P8)**, notarizes the exact ZIP, verifies the retained assets on fresh runners, and then publishes GitHub Releases. Local scripts do not publish or sign official releases.
 
-## Fixed identity and inventory
+The shared `release-swift-cli.yml@v1` currently requires an imsg companion dylib and Linux archive and has no dry-run input. This project ships neither, so its self-contained workflow preserves the existing macOS-only distribution contract. There is no npm package or Sparkle feed.
 
-- Repository: `openclaw/remindctl`
-- Homebrew route: `steipete/tap/remindctl`
-- Code identifier: `com.steipete.remindctl`
-- Developer ID: `Developer ID Application: OpenClaw Foundation (FWJYW4S8P8)`
-- Architectures: `arm64 x86_64`
-- Assets: `remindctl-macos.zip`, `checksums.txt`, and `release-inventory.json`
+## Prepare a release
 
-The inventory binds the archive to the exact protected-default-branch commit and exact annotated signed-tag object. The tag must peel to that commit both locally and on the live remote. Official packaging captures this proof before building and rechecks it after notarization so a moved branch or tag leaves no partial release output.
+Finalize one dated `## X.Y.Z - YYYY-MM-DD` section in `CHANGELOG.md`, preserving contributor credit. Synchronize `version.env`, `package.json`, `Sources/remindctl/Version.swift`, and the embedded Info.plist and versioned documentation. Land the preparation PR and wait for successful **push CI on that exact main commit**.
 
-The universal binary is assembled first, then signed once with the hardened runtime and a secure timestamp. The notary profile and release keychain credential locator are supplied only at runtime through the approved release handoff. Use `.mac-release.env.example` for non-secret configuration; runtime keychain and credential locations must never be committed.
+Only after release authorization, push a signed annotated `vX.Y.Z` tag at a commit reachable from protected main. The signature must verify against `.github/release-allowed-signers`. The pipeline never creates or moves tags and refuses any existing GitHub Release, including a draft. After a partial publish failure, inspect and resolve the existing draft explicitly; a rerun cannot overwrite it.
 
-Apple creates an online ticket for a notarized standalone executable but does not support stapling that ticket to the executable. The native verifier therefore runs `codesign --verify --strict --check-notarization -R=notarized` for each architecture in addition to checking each slice's exact Foundation metadata, embedded designated requirement, hardened runtime, secure timestamp, and embedded Info.plist identifier/version. See [Apple's custom notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow#Staple-the-ticket-to-your-distribution).
+## Rehearse without publishing
 
-On macOS 26.5, `spctl --assess --type execute` rejects known Apple-notarized standalone CLI binaries as valid code that is not an app. That result is not a release failure and must not be mocked into success. The standalone CLI verifier does not call `spctl`, `syspolicy`, or `stapler`, and it does not synthesize quarantine metadata. Those tools remain appropriate gates for actual `.app`, `.dmg`, or `.pkg` targets. Gatekeeper proof for this CLI is naturally quarantined clean-VM execution without a warning or block.
+Run from protected main after its push CI is green:
 
-## Gate 0: credential-free preparation
-
-1. Finalize the `CHANGELOG.md` section and synchronize `version.env`, `package.json`, `Sources/remindctl/Version.swift`, and the embedded Info.plist.
-2. Run:
-
-   ```bash
-   make format
-   make check
-   make docs-site
-   make release-harness
-   make release-check TAG=vX.Y.Z
-   ```
-
-`make macos-artifact` is an optional credential-free, ad-hoc local candidate. It writes `dist/remindctl-macos-local.zip`; that filename cannot satisfy the official inventory and must never be uploaded.
-
-Local linting requires SwiftLint, ShellCheck, and actionlint.
-
-`make release-harness` uses isolated changelog fixtures and can run while notes are still `Unreleased`. The release preflight and real release downloads continue to require finalized notes for the requested version.
-
-## Gate 1: protected source and signed tag
-
-After the release commit is on protected `main`, exact-head CI is green, and the tag/public mutation gate is granted:
-
-1. Confirm clean `main` is the live remote default SHA.
-2. Create a verified signed annotated `vX.Y.Z` tag at that exact commit.
-3. Push the tag, then confirm the exact remote tag object and peeled commit match locally.
-
-`scripts/check-release-source.sh` performs all of these checks and emits the deterministic source proof consumed by later gates. A lightweight or unsigned tag is rejected.
-
-## Gate 2: authorized local signing and notarization
-
-Only after the signing/notary gate is granted, run the official packager through `release-mac-app`'s managed-keychain wrapper. Supply the runtime signing locator and `NOTARYTOOL_PROFILE` through the approved handoff; do not persist either value.
-
-```bash
-/Users/steipete/Projects/agent-scripts/skills/release-mac-app/scripts/mac-release \
-  codesign-run -- scripts/package-macos-release.sh vX.Y.Z
+```sh
+gh workflow run release.yml --repo openclaw/remindctl --ref main \
+  -f version=0.3.8 -F dry_run=true
 ```
 
-The packager refuses any identity other than OpenClaw Foundation, rejects a missing runtime notary profile, validates an `Accepted` notary response, waits until the online notarization constraint passes, revalidates the live commit/tag proof, and writes the three official assets atomically to `dist/release-vX.Y.Z/`. It does not contact GitHub beyond read-only Git remote proof.
+Dispatch defaults to `dry_run: true`; a live dispatch is refused. Rehearsals use the exact current main commit even when the version already has a tag. They validate the dated notes and metadata, build both architectures, import an ephemeral signing keychain, sign and notarize, check the exact archive/inventory/checksum, and run native CLI smoke tests. They upload only Actions artifacts and never create tags, drafts, releases, or Homebrew changes. Notarization does submit the candidate ZIP to Apple.
 
-## Gate 3: draft and protected native verification
+The signer never checks out or executes source. Build and verification jobs receive no signing secrets or release-write token. Artifact IDs bind source proof, raw binaries, and signed outputs within the run. Publication checks every retained asset against the verifier digest records, redownloads the draft, compares all bytes, and only then makes it public. Signing keychains and App Store Connect files are removed even after failure.
 
-After the draft mutation gate is granted, run:
+## Channels and verification
 
-```bash
-scripts/create-release-draft.sh vX.Y.Z
-```
+The GitHub release contains `remindctl-macos.zip`, `checksums.txt`, and `release-inventory.json`. The ZIP contains only `remindctl`. Inventory schema 2 records the exact source commit, tag object (null for dry runs), dry-run status, architectures, stable identifier `com.steipete.remindctl`, Foundation team, ZIP size, and SHA-256.
 
-The helper revalidates the local signed/notarized assets, creates a draft with the exact title, changelog body, source commit target, and three assets, then dispatches `.github/workflows/release.yml` from protected `main`. It cannot publish or update Homebrew.
+Both architecture slices must pass strict signature, identity, hardened-runtime, secure-timestamp, embedded version, and online notarization checks. Fresh macos-26 arm64 and macos-15-intel runners execute the CLI natively. Standalone Mach-O files cannot be stapled; online `codesign --check-notarization -R=notarized` is the ticket check. CLI version/help smoke does not request Reminders permissions.
 
-The protected verifier runs independently on native Apple Silicon (`macos-15`) and native Intel (`macos-15-intel`). Each job:
+After publication, the workflow dispatches `steipete/homebrew-tap` with the exact ZIP URL and a unique request ID. It waits for that run and verifies the resulting formula URL and SHA-256. A tap failure leaves the GitHub Release published; repair the tap handoff without republishing the version.
 
-- checks out `github.workflow_sha` with persisted credentials disabled and requires the protected default-branch workflow ref;
-- uses the write-visible draft token only to fetch exact release metadata/assets and GitHub's verification of the signed tag object;
-- requires the inventory commit to equal the trusted workflow SHA and live remote default SHA;
-- removes GitHub content/API tokens and Actions runtime/identity tokens before any signature check or candidate execution;
-- checks exact inventory, checksum, archive shape, architectures, version, per-slice identifier/Team/authority/runtime/timestamp/designated requirement/Info.plist, and the online notarization constraint;
-- runs `--version` natively with `REMINDCTL_VERSION` unset so an environment override cannot spoof a stale binary.
+Real Reminders read/write, natural-download Gatekeeper, and TCC upgrade continuity remain manual product-validation checks on a disposable Mac/VM. CI smoke does not claim those interactive behaviors. The stable identifier and Foundation signing identity are preserved.
 
-## Gate 4: clean-VM Gatekeeper and TCC proof
+## Repository secrets
 
-Wait for both draft verifier jobs, then use the separately authorized clean macOS 26.5 VM before publication:
+Set `MACOS_SIGNING_P12`, `MACOS_SIGNING_P12_PASSWORD`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, and `ASC_PRIVATE_KEY_P8` from the release credentials in Molty. `HOMEBREW_TAP_TOKEN` must have Actions write and Contents read access to **steipete/homebrew-tap**. Never commit private signing keys or credential locators. `.github/release-allowed-signers` contains only the public tag-signing key.
 
-1. Download the draft archive through the VM's normal browser path. Extract it, confirm `com.apple.quarantine` propagated naturally to the binary, and do not add or rewrite the attribute.
-2. Execute `remindctl --version` and record that Gatekeeper presents no warning, alert, or execution block. Do not substitute a raw-CLI `spctl` assessment.
-3. Record the actual Reminders TCC principal, exercise an upgrade from the prior official binary to the Foundation-signed candidate, and verify Reminders read/write behavior.
+Keep local read-only metadata, artifact, and historical-release verification helpers for diagnosis. `scripts/verify-ci-release.py` verifies schema-2 retained CI assets with the expected SHA, tag, dry-run status, and runner architecture supplied by the workflow. Existing `verify-macos-release.sh` and download helpers remain readers for historical schema-1 releases.
 
-Current development grants belong to the host terminal application (Terminal or Ghostty), not to the `remindctl` binary. The stable identifier is preserved, but that is not evidence that a personal-Team to Foundation-Team signature migration preserves permission state. Do not claim continuity until this VM gate exists.
-
-## Gate 5: publish, published verifier, and Homebrew
-
-After the publish gate is granted, use only the fail-closed local helper:
-
-```bash
-scripts/publish-release.sh vX.Y.Z
-```
-
-It redownloads and re-verifies the exact draft, signed-tag/source proof, title, changelog body, target commit, asset identities, signature, and executable. It performs a final metadata comparison immediately before the single publication state change, waits at least two real-time seconds and into a timestamp bucket strictly later than publication and every asset update, then dispatches the published verifier from protected `main`.
-
-Wait for the exact `verify published vX.Y.Z` workflow run. Both native jobs must succeed at the inventory's source commit after publication. Only then run:
-
-```bash
-scripts/update-homebrew.sh vX.Y.Z
-```
-
-That helper redownloads and re-verifies the published release, requires the exact successful published verifier and both native jobs, and rejects any verifier run that did not begin strictly later than the current release and every current asset's last update. Immediately before its sole tap mutation, it repeats those checks and byte-compares every proof and asset. It renders `Formula/remindctl.rb` from the current tap blob using the locally verified archive SHA-256, updates that exact blob atomically, updates Homebrew, checks the canonical formula homepage/URL/version/checksum, installs or upgrades, runs `brew test`, and repeats the exact signed-binary verification against the installed binary.
-
-The published verifier accepts GitHub's bare `.github/workflows/release.yml` run path or the same path qualified with `@main`. It independently requires `head_branch` to be `main` and `head_sha` to equal the release's exact source commit; a path alone is never branch or source proof.
-
-## Closeout
-
-- Confirm GitHub Release notes match the finalized changelog section and exactly three assets exist.
-- Reopen `CHANGELOG.md` as the next patch version's `Unreleased` section only after GitHub and Homebrew proof succeeds.
-- Commit/push the closeout, wait for exact-head CI, pull `main` with `--ff-only`, and leave the checkout clean.
+After a successful authorized release, compare GitHub notes and checksums with the finalized changelog, then open the next `Unreleased` section in a separate reviewed change. Infrastructure migrations do not add product changelog entries.

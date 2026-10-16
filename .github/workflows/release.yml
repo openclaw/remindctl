@@ -1,112 +1,302 @@
-name: release verification
-run-name: verify ${{ inputs.draft && 'draft' || 'published' }} ${{ inputs.tag }}
-
+name: Release
+run-name: ${{ inputs.dry_run != false && github.event_name == 'workflow_dispatch' && 'Dry run' || 'Release' }} ${{ inputs.version || github.ref_name }}
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Release tag to verify (for example v0.3.3)"
+      version:
+        description: Version to validate (for example 0.3.8)
         required: true
+        default: '0.3.8'
         type: string
-      draft:
-        description: "Verify a draft release"
-        required: true
+      dry_run:
+        description: Build, sign, notarize and verify without publishing
         default: true
         type: boolean
-
-# Draft releases require write-visible contents access. The token is exposed only
-# to the download step and is explicitly absent during verification/execution.
-permissions:
-  contents: write
-
+permissions: {}
+concurrency:
+  group: release-${{ github.repository }}-${{ inputs.version || github.ref_name }}
+  cancel-in-progress: false
 jobs:
-  verify-native-release:
-    name: native-${{ matrix.host_arch }}
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+      tag: ${{ steps.source.outputs.tag }}
+      dry: ${{ steps.source.outputs.dry }}
+      proof: ${{ steps.proof.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: source
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          VERSION: ${{ inputs.version || github.ref_name }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        with:
+          script: |
+            const validate = require('./scripts/release-source.cjs');
+            await validate({github, context, core});
+      - name: Verify signed annotated tag
+        if: steps.source.outputs.dry != 'true'
+        env:
+          TAG: ${{ steps.source.outputs.tag }}
+        run: |
+          git -c gpg.format=ssh -c gpg.ssh.allowedSignersFile=.github/release-allowed-signers verify-tag "$TAG"
+      - id: proof
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: source-${{ github.run_id }}
+          path: release-proof/*
+          if-no-files-found: error
+  build:
+    needs: validate
+    runs-on: macos-26
+    permissions:
+      contents: read
+    outputs:
+      payload: ${{ steps.payload.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
+          persist-credentials: false
+      - name: Build universal CLI
+        run: |
+          set -euo pipefail
+          candidate=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)
+          test -n "$candidate"
+          sudo xcode-select -s "$candidate"
+          swift package resolve
+          git diff --exit-code -- Package.resolved
+          mkdir payload
+          scripts/build-macos-universal.sh "$PWD/payload/remindctl"
+          :
+      - id: payload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: raw-${{ github.run_id }}
+          path: payload/*
+          if-no-files-found: error
+  sign:
+    needs: [validate, build]
+    runs-on: macos-26
+    permissions:
+      actions: read
+    outputs:
+      assets: ${{ steps.assets.outputs.artifact-id }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.build.outputs.payload }}
+          path: payload
+          merge-multiple: true
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.validate.outputs.proof }}
+          path: proof
+          merge-multiple: true
+      - name: Import isolated signing credentials
+        env:
+          P12: ${{ secrets.MACOS_SIGNING_P12 }}
+          P12_PASSWORD: ${{ secrets.MACOS_SIGNING_P12_PASSWORD }}
+          ASC_KEY: ${{ secrets.ASC_PRIVATE_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          security list-keychains -d user > "$RUNNER_TEMP/keychains-before"
+          keychain="$RUNNER_TEMP/release.keychain-db"
+          password=$(openssl rand -hex 32)
+          echo "::add-mask::$password"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          printf '%s' "$P12" | base64 --decode > "$RUNNER_TEMP/signing.p12"
+          security import "$RUNNER_TEMP/signing.p12" -k "$keychain" -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain" >/dev/null
+          printf '%s' "$ASC_KEY" > "$RUNNER_TEMP/AuthKey.p8"
+          rm "$RUNNER_TEMP/signing.p12"
+      - name: Sign and notarize immutable payload
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          chmod +x payload/remindctl
+          lipo -verify_arch arm64 x86_64 payload/remindctl
+          codesign --force --timestamp --options runtime \
+            --identifier com.steipete.remindctl \
+            --requirements '=designated => identifier "com.steipete.remindctl" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] exists and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = "FWJYW4S8P8"' \
+             \
+            --keychain "$RUNNER_TEMP/release.keychain-db" \
+            --sign 'Developer ID Application: OpenClaw Foundation (FWJYW4S8P8)' payload/remindctl
+          mkdir assets
+          (cd payload && ditto --norsrc -c -k remindctl ../assets/remindctl-macos.zip)
+          xcrun notarytool submit assets/remindctl-macos.zip \
+            --key "$RUNNER_TEMP/AuthKey.p8" --key-id "$ASC_KEY_ID" --issuer "$ASC_ISSUER_ID" \
+            --wait --output-format json > "$RUNNER_TEMP/notary.json"
+          jq -e '.status == "Accepted"' "$RUNNER_TEMP/notary.json"
+          codesign --verify --strict --check-notarization -R=notarized payload/remindctl
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          proof = json.loads(Path('proof/source-proof.json').read_text())
+          archive = Path('assets/remindctl-macos.zip')
+          digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+          inventory = dict(schemaVersion=2, **proof, identifier='com.steipete.remindctl',
+              teamIdentifier='FWJYW4S8P8', architectures=['arm64', 'x86_64'],
+              assets=[dict(name=archive.name, sha256=digest, size=archive.stat().st_size)])
+          Path('assets/release-inventory.json').write_text(json.dumps(inventory, indent=2) + '\n')
+          Path('assets/checksums.txt').write_text(f'{digest}  {archive.name}\n')
+          PY
+      - name: Remove signing material and restore keychain search list
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, shlex, subprocess
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          snapshot = root / 'keychains-before'
+          failures = []
+          if snapshot.exists():
+              result = subprocess.run(['security', 'list-keychains', '-d', 'user', '-s', *shlex.split(snapshot.read_text())])
+              if result.returncode: failures.append('restore keychain search list')
+          keychain = root / 'release.keychain-db'
+          if keychain.exists():
+              result = subprocess.run(['security', 'delete-keychain', str(keychain)])
+              if result.returncode: failures.append('delete temporary keychain')
+          for name in ['signing.p12', 'AuthKey.p8']:
+              (root / name).unlink(missing_ok=True)
+          if failures: raise SystemExit(', '.join(failures))
+          PY
+      - id: assets
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: signed-${{ github.run_id }}
+          path: assets/*
+          if-no-files-found: error
+  verify:
+    needs: [validate, sign]
     strategy:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-15
-            host_arch: arm64
-          - runner: macos-15-intel
-            host_arch: x86_64
+          - {runner: macos-26, arch: arm64}
+          - {runner: macos-15-intel, arch: x86_64}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
     steps:
-      - name: Require protected default-branch workflow
-        shell: bash
-        env:
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-          EVENT_NAME: ${{ github.event_name }}
-          EVENT_REF: ${{ github.ref }}
-          REPOSITORY: ${{ github.repository }}
-          WORKFLOW_REF: ${{ github.workflow_ref }}
-        run: |
-          expected="$REPOSITORY/.github/workflows/release.yml@refs/heads/$DEFAULT_BRANCH"
-          if [[ "$WORKFLOW_REF" != "$expected" ]]; then
-            echo "::error::Verifier must run from protected workflow ref $expected"
-            exit 1
-          fi
-          if [[ "$EVENT_NAME" != "workflow_dispatch" ]]; then
-            echo "::error::Verifier only accepts an explicit protected workflow dispatch"
-            exit 1
-          fi
-          if [[ "$EVENT_REF" != "refs/heads/$DEFAULT_BRANCH" ]]; then
-            echo "::error::Manual verification must target $DEFAULT_BRANCH"
-            exit 1
-          fi
-
-      - name: Check out trusted verifier revision
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 1
+          ref: ${{ needs.validate.outputs.sha }}
           persist-credentials: false
-          ref: ${{ github.workflow_sha }}
-
-      - name: Require native host architecture
-        shell: bash
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.sign.outputs.assets }}
+          path: assets
+          merge-multiple: true
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.validate.outputs.proof }}
+          path: proof
+          merge-multiple: true
+      - name: Verify and smoke without signing or publication credentials
         env:
-          EXPECTED_HOST_ARCH: ${{ matrix.host_arch }}
+          EXPECTED_SHA: ${{ needs.validate.outputs.sha }}
+          EXPECTED_TAG: ${{ needs.validate.outputs.tag }}
+          EXPECTED_DRY: ${{ needs.validate.outputs.dry }}
+          EXPECTED_ARCH: ${{ matrix.arch }}
         run: |
-          actual="$(uname -m)"
-          if [[ "$actual" != "$EXPECTED_HOST_ARCH" ]]; then
-            echo "::error::Expected native $EXPECTED_HOST_ARCH host; found $actual"
-            exit 1
-          fi
-
-      - name: Resolve requested release
-        id: release
-        shell: bash
-        env:
-          INPUT_DRAFT: ${{ inputs.draft }}
-          INPUT_TAG: ${{ inputs.tag }}
-        run: |
-          tag="$INPUT_TAG"
-          if [[ "$INPUT_DRAFT" == "true" ]]; then
-            state="draft"
-          else
-            state="published"
-          fi
-          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid release tag: $tag"
-            exit 1
-          fi
-          printf 'tag=%s\nstate=%s\n' "$tag" "$state" >>"$GITHUB_OUTPUT"
-
-      - name: Download exact release asset inventory
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REQUIRE_GH_TOKEN: 1
-          RELEASE_STATE: ${{ steps.release.outputs.state }}
-          RELEASE_TAG: ${{ steps.release.outputs.tag }}
-          TRUSTED_WORKFLOW_SHA: ${{ github.workflow_sha }}
-        run: scripts/download-release-assets.sh "$RELEASE_TAG" "$RELEASE_STATE" "$RUNNER_TEMP/remindctl-download"
-
-      - name: Verify native artifact without draft token
-        env:
-          RELEASE_TAG: ${{ steps.release.outputs.tag }}
-          SOURCE_PROOF_FILE: ${{ runner.temp }}/remindctl-download/source-proof.json
-        run: |
+          test "$(uname -m)" = "$EXPECTED_ARCH"
           env -u GH_TOKEN -u GITHUB_TOKEN -u HOMEBREW_GITHUB_API_TOKEN \
             -u ACTIONS_RUNTIME_TOKEN -u ACTIONS_ID_TOKEN_REQUEST_TOKEN \
-            scripts/verify-macos-release.sh "$RELEASE_TAG" "$RUNNER_TEMP/remindctl-download/assets"
+            python3 scripts/verify-ci-release.py assets proof/source-proof.json
+          (cd assets && shasum -a 256 ./* > ../verified.txt)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verified-${{ matrix.arch }}-${{ github.run_id }}
+          path: verified.txt
+          if-no-files-found: error
+  publish:
+    if: needs.validate.outputs.dry == 'false'
+    needs: [validate, sign, verify]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.sign.outputs.assets }}
+          path: assets
+          merge-multiple: true
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.validate.outputs.proof }}
+          path: proof
+          merge-multiple: true
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: verified-*-${{ github.run_id }}
+          path: attestations
+      - name: Publish only the verified bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.validate.outputs.tag }}
+          SHA: ${{ needs.validate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          test "$(find attestations -name verified.txt | wc -l | tr -d ' ')" = 2
+          for proof in attestations/*/verified.txt; do
+            (cd assets && sha256sum --check "../$proof")
+          done
+          expected_tag=$(jq -r .tagObject proof/source-proof.json)
+          test "$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq .object.sha)" = "$expected_tag"
+          # Never resume or overwrite an existing version, including a draft.
+          if gh api "repos/$GH_REPO/releases/tags/$TAG" > /dev/null 2> lookup-error; then
+            echo 'Release already exists' >&2
+            exit 1
+          fi
+          grep -q 'HTTP 404' lookup-error
+          gh release create "$TAG" assets/* --verify-tag --target "$SHA" --title "$TAG" --notes-file proof/RELEASE-NOTES.md --draft
+          mkdir downloaded
+          gh release download "$TAG" --dir downloaded
+          diff -r assets downloaded
+          gh release edit "$TAG" --draft=false
+      - name: Dispatch and verify Homebrew handoff
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          TAG: ${{ needs.validate.outputs.tag }}
+        with:
+          github-token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          script: |
+            const fs = require('node:fs');
+            const tap = {owner: 'steipete', repo: 'homebrew-tap'};
+            const request = `remindctl-${context.runId}-${process.env.GITHUB_RUN_ATTEMPT}`;
+            const url = `https://github.com/openclaw/remindctl/releases/download/${process.env.TAG}/remindctl-macos.zip`;
+            const expected = JSON.parse(fs.readFileSync('assets/release-inventory.json')).assets[0].sha256;
+            await github.rest.actions.createWorkflowDispatch({...tap, workflow_id: 'update-formula.yml', ref: 'main',
+              inputs: {formula: 'remindctl', tag: process.env.TAG, repository: 'openclaw/remindctl', artifact_url: url, request_id: request}});
+            for (let attempt = 0; attempt < 30; attempt++) {
+              await new Promise(resolve => setTimeout(resolve, 20000));
+              const runs = (await github.rest.actions.listWorkflowRuns({...tap, workflow_id: 'update-formula.yml', event: 'workflow_dispatch', per_page: 30})).data.workflow_runs;
+              const run = runs.find(run => run.display_title.includes(request));
+              if (!run || run.status !== 'completed') continue;
+              if (run.conclusion !== 'success') throw new Error(`Tap handoff failed: ${run.html_url}`);
+              const file = (await github.rest.repos.getContent({...tap, path: 'Formula/remindctl.rb', ref: 'main'})).data;
+              const formula = Buffer.from(file.content, 'base64').toString('utf8');
+              if (!formula.includes(`url "${url}"`) || !formula.includes(`sha256 "${expected}"`)) throw new Error('Tap URL or checksum mismatch');
+              core.info(`Verified ${run.html_url}`);
+              return;
+            }
+            throw new Error('Timed out waiting for the exact Homebrew handoff');

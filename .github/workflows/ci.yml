@@ -45,6 +45,8 @@ jobs:
         run: shellcheck -x scripts/*.sh && actionlint .github/workflows/*.yml
       - name: Swift test + coverage
         run: scripts/check-coverage.sh
+      - name: Test CI release source validation
+        run: node --test scripts/release-source.test.cjs
       - name: Credential-free release harness
         run: scripts/test-release.sh
       - name: Credential-free universal candidate
