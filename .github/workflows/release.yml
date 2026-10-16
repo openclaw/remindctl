@@ -130,7 +130,7 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x payload/remindctl
-          lipo -verify_arch arm64 x86_64 payload/remindctl
+          for architecture in arm64 x86_64; do lipo payload/remindctl -verify_arch "$architecture"; done
           codesign --force --timestamp --options runtime \
             --identifier com.steipete.remindctl \
             --requirements '=designated => identifier "com.steipete.remindctl" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] exists and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = "FWJYW4S8P8"' \
