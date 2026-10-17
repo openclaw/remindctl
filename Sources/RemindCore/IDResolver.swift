@@ -19,12 +19,12 @@ public enum IDResolver {
     }
     for input in inputs {
       let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-      if let index = Int(trimmed) {
-        guard index > 0 && index <= numericSorted.count else {
-          throw RemindCoreError.invalidIdentifier(trimmed)
+      let numericIndex = Int(trimmed)
+      if let index = numericIndex {
+        if index > 0 && index <= numericSorted.count {
+          appendUnique(numericSorted[index - 1])
+          continue
         }
-        appendUnique(numericSorted[index - 1])
-        continue
       }
 
       if trimmed.count < minimumPrefixLength {
@@ -33,6 +33,9 @@ public enum IDResolver {
 
       let matches = sorted.filter { $0.id.lowercased().hasPrefix(trimmed.lowercased()) }
       if matches.isEmpty {
+        if numericIndex != nil {
+          throw RemindCoreError.invalidIdentifier(trimmed)
+        }
         throw RemindCoreError.reminderNotFound(trimmed)
       }
       if matches.count > 1 {

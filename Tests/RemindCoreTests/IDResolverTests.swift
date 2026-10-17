@@ -116,6 +116,55 @@ struct IDResolverTests {
     #expect(resolved.first?.title == "First")
   }
 
+  @Test("Resolve an out-of-range numeric token as an ID prefix")
+  func resolveNumericPrefix() throws {
+    let reminder = ReminderItem(
+      id: "45534C82-FE4E-4C30-ABE1-2243ED31ACC8",
+      title: "Numeric prefix",
+      notes: nil,
+      isCompleted: false,
+      completionDate: nil,
+      priority: .none,
+      dueDate: nil,
+      listID: "list1",
+      listName: "Work"
+    )
+
+    let resolved = try IDResolver.resolve(["4553"], from: [reminder])
+    #expect(resolved.map(\.id) == [reminder.id])
+  }
+
+  @Test("Keep valid numeric index precedence over an ID prefix")
+  func validIndexPrecedesNumericPrefix() throws {
+    let reminders = [
+      ReminderItem(
+        id: "0001-prefix",
+        title: "Prefix match",
+        notes: nil,
+        isCompleted: false,
+        completionDate: nil,
+        priority: .none,
+        dueDate: nil,
+        listID: "list1",
+        listName: "Work"
+      ),
+      ReminderItem(
+        id: "other",
+        title: "Numeric index",
+        notes: nil,
+        isCompleted: false,
+        completionDate: nil,
+        priority: .none,
+        dueDate: nil,
+        listID: "list1",
+        listName: "Work"
+      ),
+    ]
+
+    let resolved = try IDResolver.resolve(["0001"], from: reminders, numericFrom: [reminders[1]])
+    #expect(resolved.map(\.id) == [reminders[1].id])
+  }
+
   @Test("Reject short prefix")
   func rejectShortPrefix() {
     #expect(throws: RemindCoreError.invalidIdentifier("ab")) {
