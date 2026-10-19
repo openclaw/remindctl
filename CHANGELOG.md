@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Resolve all-digit reminder ID prefixes when the number is outside the current index range, while preserving valid index precedence. Thanks @goutamadwant.
+
 - Use the shared Swift CLI release workflow for macOS-only signed releases and no-publish rehearsals, replacing the duplicated release pipeline.
 
 - Resolve repeated reminder indexes, IDs, and prefixes once for delete and complete, preserving input order and accurate preview/confirmation counts. Thanks @SebTardif.

@@ -17,6 +17,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
+    # CodeQL Swift tracing does not support macOS 27 yet: https://github.com/github/codeql/issues/22742
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:

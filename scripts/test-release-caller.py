@@ -54,14 +54,19 @@ class ReleaseCallerTests(unittest.TestCase):
             (root / 'tools').mkdir()
             shutil.copy(ROOT / 'scripts/build-release.sh', root / 'scripts/build-release.sh')
             builder = root / 'scripts/build-macos-universal.sh'
-            builder.write_text('#!/bin/bash\nset -eu\nprintf "synthetic" > "$1"\n')
+            builder.write_text('#!/bin/bash\nset -eu\n'
+                               'test "$DEVELOPER_DIR" = "/Applications/Xcode_27.app/Contents/Developer"\n'
+                               'test "$MACOSX_DEPLOYMENT_TARGET" = "14.0"\n'
+                               'printf "synthetic" > "$1"\n')
             builder.chmod(0o755)
             find = root / 'tools/find'
-            find.write_text('#!/bin/bash\necho /Applications/Xcode_26.6.app\n')
+            find.write_text('#!/bin/bash\necho "Unexpected Xcode discovery" >&2\nexit 1\n')
             find.chmod(0o755)
             output = root / 'output with spaces'
             subprocess.run([str(root / 'scripts/build-release.sh')], check=True,
-                           env=dict(os.environ, OUTPUT_DIR=str(output), PATH=str(root / 'tools') + ':' + os.environ['PATH']))
+                           env=dict(os.environ, OUTPUT_DIR=str(output),
+                                    DEVELOPER_DIR='/Applications/Xcode_27.app/Contents/Developer',
+                                    PATH=str(root / 'tools') + ':' + os.environ['PATH']))
             binary = output / BINARY
             self.assertEqual(binary.read_text(), 'synthetic')
             self.assertTrue(os.access(binary, os.X_OK))

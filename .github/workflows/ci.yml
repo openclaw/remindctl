@@ -25,10 +25,10 @@ jobs:
         run: make docs-site
 
   build:
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 20
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      MACOSX_DEPLOYMENT_TARGET: '14.0'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Swift version
@@ -51,12 +51,16 @@ jobs:
         run: scripts/test-release.sh
       - name: Credential-free universal candidate
         run: make macos-artifact
-      - name: Run the universal candidate natively
+      - name: Run both universal candidate architectures
         run: |
+          arch -x86_64 /usr/bin/true || softwareupdate --install-rosetta --agree-to-license
+          arch -x86_64 /usr/bin/true
           unzip -q dist/remindctl-macos-local.zip -d "$RUNNER_TEMP/remindctl-smoke"
           binary="$RUNNER_TEMP/remindctl-smoke/remindctl"
           source version.env
           test "$(env -u REMINDCTL_VERSION "$binary" --version)" = "$MARKETING_VERSION"
           "$binary" --help
+          test "$(env -u REMINDCTL_VERSION arch -x86_64 "$binary" --version)" = "$MARKETING_VERSION"
+          arch -x86_64 "$binary" --help
           "$binary" completion bash | bash -n
           "$binary" completion zsh | zsh -n

@@ -57,8 +57,8 @@ jobs:
       helper-identifier: ''
       linux-archive-name: ''
       linux-build-script: ''
-      macos-runner: macos-26
-      verify-arm64-runner: macos-26
+      macos-runner: xcode-27
+      verify-arm64-runner: xcode-27
       minimum-macos-version: 14
       macos-build-script: scripts/build-release.sh
       prepare-script: ''

@@ -304,7 +304,7 @@ Supporting those would require Apple to expose new public APIs or a separate non
 ## Development
 
 The package manager is pinned in `package.json`, and `.node-version` selects the docs runtime.
-CI uses Xcode 26.6 on macOS 26, builds both release architectures, and runs the universal CLI natively.
+CI uses the Xcode 27 toolchain on `xcode-27`, builds both release architectures with a macOS 14 deployment target, and runs the universal CLI natively and under Rosetta. Swift CodeQL remains on macOS 26 until its tracer supports macOS 27.
 `make check` runs the Swift tests once with coverage and retains the 90% RemindCore gate.
 CodeQL scans Swift with an explicit package build after dependency resolution, plus JavaScript/TypeScript and Actions.
 
