@@ -135,6 +135,7 @@ public actor RemindersStore {
 
   public func updateReminder(id: String, update: ReminderUpdate) async throws -> ReminderItem {
     let reminder = try reminder(withID: id)
+    let originalCalendarID = reminder.calendar?.calendarIdentifier
 
     if let title = update.title {
       reminder.title = title
@@ -174,7 +175,9 @@ public actor RemindersStore {
       reminder.isCompleted = isCompleted
     }
 
-    try eventStore.save(reminder, commit: true)
+    try ReminderUpdateSave.save(isMoving: reminder.calendar?.calendarIdentifier != originalCalendarID) {
+      try eventStore.save(reminder, commit: true)
+    }
 
     return try item(from: reminder)
   }

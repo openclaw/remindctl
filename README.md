@@ -301,6 +301,8 @@ If a calendar is missing after `add`, `edit`, or `complete` saves a reminder, th
 
 Supporting those would require Apple to expose new public APIs or a separate non-EventKit backend.
 
+Moving reminders with `edit --list` or `edit --list-id` can fail when either list is shared. If EventKit rejects the move with `com.apple.reminderkit error -3002`, move the reminder in Reminders.app, then retry any other edits. `remindctl` does not copy and delete reminders to work around this restriction because EventKit cannot preserve all Reminders.app metadata.
+
 ## Development
 
 The package manager is pinned in `package.json`, and `.node-version` selects the docs runtime.

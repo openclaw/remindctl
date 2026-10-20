@@ -73,6 +73,8 @@ remindctl edit 4A83 --list-id 7A12
 remindctl edit 4A83 --no-repeat
 ```
 
+Moving a reminder with `--list` or `--list-id` can fail when the source or destination list is shared. If EventKit rejects the move with `com.apple.reminderkit error -3002`, move the reminder in Reminders.app, then retry any other edits. The command does not fall back to copying and deleting the reminder, since public EventKit cannot preserve all Reminders.app metadata.
+
 Commands that target reminders accept indexes from the current default listing or ID prefixes.
 An in-range numeric value always selects that index. An out-of-range numeric value falls back to ID-prefix matching and returns an error when no reminder ID matches.
 `complete` and `delete` process each reminder once, even when repeated indexes, IDs, or prefixes identify the same reminder. Previews and delete confirmation counts use these unique targets in first-input order; every input must still be valid and unambiguous.
