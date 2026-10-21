@@ -16,7 +16,7 @@ Run from protected main after its push CI is green:
 
 ```sh
 gh workflow run release.yml --repo openclaw/remindctl --ref main \
-  -f version=0.3.8 -F dry_run=true
+  -f version=0.3.9 -F dry_run=true
 ```
 
 Dispatch defaults to `dry_run: true`; a live dispatch is refused. Rehearsals use the exact current main commit even when the version already has a tag. They validate the dated notes and metadata, build both architectures, import an ephemeral signing keychain, sign and notarize, check the exact archive/inventory/checksum, and run native CLI smoke tests. They upload only Actions artifacts and never create tags, drafts, releases, or Homebrew changes. Notarization does submit the candidate ZIP to Apple.

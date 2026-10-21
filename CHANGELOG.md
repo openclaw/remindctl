@@ -1,14 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.3.9 - 2026-10-20
 
-- Explain EventKit's shared-list move limitation when `edit --list` or `--list-id` fails with ReminderKit error -3002, and direct users to move the reminder in Reminders.app. Thanks @paulchiu.
-
-- Resolve all-digit reminder ID prefixes when the number is outside the current index range, while preserving valid index precedence. Thanks @goutamadwant.
-
-- Use the shared Swift CLI release workflow for macOS-only signed releases and no-publish rehearsals, replacing the duplicated release pipeline.
+**Highlights:** Repeated reminder targets are handled once with accurate counts, and all-digit reminder ID prefixes now resolve correctly.
 
 - Resolve repeated reminder indexes, IDs, and prefixes once for delete and complete, preserving input order and accurate preview/confirmation counts. Thanks @SebTardif.
+- Resolve all-digit reminder ID prefixes when the number is outside the current index range, while preserving valid index precedence. Thanks @goutamadwant.
+- Explain EventKit's shared-list move limitation when `edit --list` or `--list-id` fails with ReminderKit error -3002, and direct users to move the reminder in Reminders.app. Thanks @paulchiu.
+- Use the shared Swift CLI release workflow for macOS-only signed releases and no-publish rehearsals, replacing the duplicated release pipeline.
 
 ## 0.3.8 - 2026-09-24
 
