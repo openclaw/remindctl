@@ -1,5 +1,7 @@
 # Changelog
 
+## Unreleased
+
 ## 0.3.9 - 2026-10-20
 
 **Highlights:** Repeated reminder targets are handled once with accurate counts, and all-digit reminder ID prefixes now resolve correctly.
