@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Run main CodeQL analysis on the existing weekly schedule instead of every push, preserving PR scans and allowing scheduled scans to finish.
+
 ## 0.3.9 - 2026-10-20
 
 **Highlights:** Repeated reminder targets are handled once with accurate counts, and all-digit reminder ID prefixes now resolve correctly.
