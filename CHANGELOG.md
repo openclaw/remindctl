@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Update the documentation runtime to Node.js 26.13.0 and the development package manager to pnpm 12.16.1.
+
 - Run main CodeQL analysis on the existing weekly schedule instead of every push, preserving PR scans and allowing scheduled scans to finish.
 
 ## 0.3.9 - 2026-10-20
