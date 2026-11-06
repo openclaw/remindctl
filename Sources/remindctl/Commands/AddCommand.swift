@@ -28,7 +28,19 @@ enum AddCommand {
             .make(
               label: "location",
               names: [.long("location")],
-              help: "Location address for geofence trigger",
+              help: "Geofence address, or display label with coordinates",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "latitude",
+              names: [.long("latitude")],
+              help: "Latitude (-90...90; requires --longitude)",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "longitude",
+              names: [.long("longitude")],
+              help: "Longitude (-180...180; requires --latitude)",
               parsing: .singleValue
             ),
             .make(
@@ -67,6 +79,7 @@ enum AddCommand {
         "remindctl add --title \"Call mom\" --list Personal --due tomorrow",
         "remindctl add \"Call mom\" --due \"2026-01-03 09:00\" --alarm \"2026-01-03 08:55\"",
         "remindctl add \"Check mailbox\" --location \"1 Apple Park Way, Cupertino, CA\"",
+        "remindctl add \"Synthetic geofence\" --latitude 12.5 --longitude=-34.25 --location \"Synthetic label\"",
         "remindctl add \"Take vitamins\" --due tomorrow --repeat daily",
         "remindctl add \"Review docs\" --priority high",
         "remindctl add \"Buy headphones\" --url \"https://example.com/product\"",
@@ -107,7 +120,9 @@ enum AddCommand {
       let locationTrigger = try makeLocationTrigger(
         location: locationValue,
         radius: radiusValue,
-        leaving: values.flag("leaving")
+        leaving: values.flag("leaving"),
+        latitude: values.option("latitude"),
+        longitude: values.option("longitude")
       )
       let recurrenceRule = try repeatValue.map(CommandHelpers.parseRecurrence)
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
@@ -143,20 +158,36 @@ enum AddCommand {
   static func makeLocationTrigger(
     location: String?,
     radius: String?,
-    leaving: Bool
+    leaving: Bool,
+    latitude: String? = nil,
+    longitude: String? = nil
   ) throws -> LocationTrigger? {
-    guard let location else {
+    guard (latitude == nil) == (longitude == nil) else {
+      throw RemindCoreError.operationFailed("Provide --latitude and --longitude together")
+    }
+    let latitude = try latitude.map { try parseCoordinate($0, name: "latitude", range: -90...90) }
+    let longitude = try longitude.map { try parseCoordinate($0, name: "longitude", range: -180...180) }
+    guard location != nil || latitude != nil else {
       if radius != nil || leaving {
-        throw RemindCoreError.operationFailed("Use --location with --radius or --leaving")
+        throw RemindCoreError.operationFailed("Use --location or --latitude and --longitude with --radius or --leaving")
       }
       return nil
     }
     let radius = try radius.map(parseRadius) ?? 100
     return LocationTrigger(
-      address: location,
+      address: location ?? "",
+      latitude: latitude,
+      longitude: longitude,
       radius: radius,
       proximity: leaving ? .leaving : .arriving
     )
+  }
+
+  private static func parseCoordinate(_ value: String, name: String, range: ClosedRange<Double>) throws -> Double {
+    guard let coordinate = Double(value), coordinate.isFinite, range.contains(coordinate) else {
+      throw RemindCoreError.operationFailed("Invalid \(name): \"\(value)\" (expected \(range))")
+    }
+    return coordinate
   }
 
   private static func parseRadius(_ value: String) throws -> Double {
