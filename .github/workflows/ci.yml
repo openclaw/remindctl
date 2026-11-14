@@ -34,7 +34,10 @@ jobs:
       - name: Swift version
         run: swift --version
       - name: Install linters
-        run: brew install swiftlint shellcheck actionlint
+        run: |
+          brew install shellcheck actionlint
+          bash scripts/install-linters.sh "$RUNNER_TEMP/remindctl-linters"
+          echo "$RUNNER_TEMP/remindctl-linters" >> "$GITHUB_PATH"
       - name: Generate version files
         run: scripts/generate-version.sh
       - name: Swift format lint

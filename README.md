@@ -305,6 +305,16 @@ Moving reminders with `edit --list` or `edit --list-id` can fail when either lis
 
 ## Development
 
+Install the same checksum-verified SwiftLint 0.65.1 as CI, then run the local checks:
+
+```bash
+bash scripts/install-linters.sh
+export PATH="$PWD/.build/linters:$PATH"
+make lint
+```
+
+The version and archive checksum live in `scripts/install-linters.sh`; update them together after validating `.swiftlint.yml`. Formatting uses Apple's `swift format` from the selected Xcode toolchain (Xcode 27 in CI).
+
 The package manager is pinned in `package.json`, and `.node-version` selects the docs runtime.
 CI uses the Xcode 27 toolchain on `xcode-27`, builds both release architectures with a macOS 14 deployment target, and runs the universal CLI natively and under Rosetta. Swift CodeQL remains on macOS 26 until its tracer supports macOS 27.
 `make check` runs the Swift tests once with coverage and retains the 90% RemindCore gate.
