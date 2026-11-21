@@ -42,6 +42,7 @@ remindctl add "Call Sam" --list Work --due tomorrow
 remindctl add "Call Sam" --list-id 7A12 --due tomorrow
 remindctl add "Take vitamins" --due tomorrow --repeat daily
 remindctl add "Check mailbox" --location "1 Apple Park Way, Cupertino, CA"
+remindctl add "Synthetic geofence" --latitude 12.5 --longitude=-34.25 --location "Synthetic label"
 ```
 
 Useful `add` options:
@@ -54,7 +55,8 @@ Useful `add` options:
 - `--repeat <rule>` sets simple recurrence.
 - `--priority <none|low|medium|high>` sets priority.
 - `--url <url>` stores the EventKit URL and mirrors it into notes as `remindctl URL (managed): ...` so Reminders.app shows the link.
-- `--location <address>` creates an arriving geofence trigger.
+- `--location <address>` creates an arriving geofence trigger by geocoding the address.
+- `--latitude <degrees>` and `--longitude <degrees>` together create a geofence at an exact point without geocoding. Latitude must be finite and in [-90, 90]; longitude must be finite and in [-180, 180]. With coordinates, `--location` is an optional display label.
 - `--leaving` changes a location trigger to leaving.
 - `--radius <meters>` adjusts the geofence radius.
 

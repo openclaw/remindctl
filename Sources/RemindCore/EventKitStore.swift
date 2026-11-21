@@ -127,7 +127,7 @@ public actor RemindersStore {
       replaceRecurrence(on: reminder, with: recurrenceRule)
     }
     if let locationTrigger = draft.locationTrigger {
-      reminder.addAlarm(try await locationAlarm(from: locationTrigger))
+      reminder.addAlarm(try await Self.locationAlarm(from: locationTrigger))
     }
     try eventStore.save(reminder, commit: true)
     return try item(from: reminder)

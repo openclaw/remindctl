@@ -203,8 +203,14 @@ remindctl add "Lock up" --location "Home" --leaving
 remindctl add "Get groceries" --location "123 Main St" --radius 200
 ```
 
-Location triggers use EventKit and CoreLocation geocoding. They may depend on system location services and network availability.
-Geofence radii must be finite, positive numbers of meters.
+To use an exact point without geocoding, provide both `--latitude` and `--longitude`. With coordinates, `--location` is an optional display label:
+
+```bash
+remindctl add "Synthetic geofence" --latitude 12.5 --longitude=-34.25 --location "Synthetic label" --radius 200 --leaving
+```
+
+Latitude must be finite and between -90 and 90; longitude must be finite and between -180 and 180 (inclusive). Geofence radii must be finite, positive numbers of meters.
+Address-only triggers use CoreLocation geocoding and may depend on network availability. Location triggers use EventKit and may depend on system location services.
 
 ## Output
 
