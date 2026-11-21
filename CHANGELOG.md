@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Update Commander to 0.3.1 for inherited command fields and consistent positional argument ordering.
+
 - Pin CI and local SwiftLint to checksum-verified 0.65.1 while keeping formatting on the selected Xcode toolchain.
 
 - Update the documentation runtime to Node.js 26.13.0 and the development package manager to pnpm 12.16.1.

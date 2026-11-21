@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/steipete/Commander.git",
       "state" : {
-        "revision" : "3f5a3cb1f19ce7ca79fdc2111a09dfb3da200c1c",
-        "version" : "0.3.0"
+        "revision" : "e8572b84fae01c250d2d54396825a1adf052cb51",
+        "version" : "0.3.1"
       }
     }
   ],
